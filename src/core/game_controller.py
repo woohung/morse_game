@@ -1,0 +1,237 @@
+"""
+Game Controller for Morse Code Game
+Handles game logic and state transitions.
+"""
+import time
+from typing import Optional
+from .game_state import GameStateManager, GameState
+from .word_generator import WordGenerator
+from .morse_decoder import MorseDecoder
+from ..data.high_scores import HighScoreManager
+
+
+class GameController:
+    """Controls game logic and manages game state."""
+    
+    def __init__(self, state_manager: GameStateManager):
+        self.state_manager = state_manager
+        self.word_generator = WordGenerator()
+        self.decoder = MorseDecoder()
+        self.high_scores = HighScoreManager()
+        self.current_sequence = ""
+        self.last_element_time: Optional[float] = None
+        self.last_timeout_check = time.time()  # Initialize timeout check timer
+    
+    def start_new_game(self):
+        """Start a new game session."""
+        print(f"Starting new game for player: {self.state_manager.game_data.nickname}")
+        
+        # Set up difficulty-based settings
+        difficulty = self.state_manager.game_data.difficulty
+        settings = self.state_manager.get_difficulty_settings()
+        
+        # Configure word generator for difficulty
+        self.word_generator.set_difficulty(difficulty)
+        self.word_generator.reset()
+        
+        # Get first word
+        self.state_manager.game_data.current_word = self.word_generator.get_random_word()
+        self.state_manager.game_data.letter_colors = ['white'] * len(self.state_manager.game_data.current_word)
+        self.state_manager.game_data.current_letter_index = 0
+        self.state_manager.game_data.letter_errors = {}
+        self.state_manager.game_data.words_completed = 0
+        self.state_manager.game_data.score = 0
+        self.state_manager.game_data.time_remaining = settings['game_duration']
+        self.state_manager.game_data.total_errors = 0
+        self.state_manager.game_data.game_start_time = time.time()
+        self.current_sequence = ""
+        self.last_timeout_check = time.time()  # Reset timeout check timer
+        print(f"First word: {self.state_manager.game_data.current_word} (difficulty: {difficulty})")
+        
+        # Start timer for first word
+        self.state_manager.start_word_timer(self.state_manager.game_data.current_word)
+        
+        # Change state after setting all game data
+        self.state_manager.change_state(GameState.PLAYING)
+    
+    def on_key_press(self):
+        """Handle Morse key press during gameplay."""
+        if self.state_manager.current_state == GameState.PLAYING:
+            self.state_manager.cursor_visible = True
+            self.state_manager.cursor_timer = time.time()
+    
+    def on_key_release(self, press_duration: float):
+        """Handle Morse key release during gameplay."""
+        from .config import DEBOUNCE_TIME, DOT_DURATION, DASH_DURATION
+        
+        if self.state_manager.current_state != GameState.PLAYING:
+            return
+            
+        now = time.time()
+
+        # Ignore debounce
+        if press_duration < DEBOUNCE_TIME:
+            return
+
+        # Determine dot or dash
+        threshold = (DOT_DURATION + DASH_DURATION) / 2
+        if press_duration < threshold:
+            self.current_sequence += "."
+            print("Added: . (dot)")
+        else:
+            self.current_sequence += "-"
+            print("Added: - (dash)")
+
+        print(f"Current sequence: {self.current_sequence}")
+
+        # Update timers
+        self.last_element_time = now
+        self.state_manager.cursor_visible = True
+        self.state_manager.cursor_timer = now
+    
+    def check_morse_input(self):
+        """Check if current Morse sequence matches the current letter in the word."""
+        if not self.current_sequence or self.state_manager.current_state != GameState.PLAYING:
+            return
+        
+        # Try to decode the current sequence
+        decoded_char = self.decoder.decode(self.current_sequence)
+        
+        if decoded_char:
+            current_word = self.state_manager.game_data.current_word
+            current_index = self.state_manager.game_data.current_letter_index
+            letter_colors = self.state_manager.game_data.letter_colors
+            
+            # Check if we've completed the word
+            if current_index >= len(current_word):
+                return
+            
+            target_char = current_word[current_index]
+            
+            if decoded_char == target_char:
+                # Correct letter found
+                letter_colors[current_index] = 'green'
+                self.state_manager.game_data.letter_colors = letter_colors
+                print(f"Correct! Found '{decoded_char}' at position {current_index}")
+                
+                # Move to next letter
+                self.state_manager.game_data.current_letter_index += 1
+                
+                # Check if word is complete
+                if self.state_manager.game_data.current_letter_index >= len(current_word):
+                    self._word_completed()
+            else:
+                # Wrong letter - increment error count
+                error_count = self.state_manager.game_data.letter_errors.get(current_index, 0) + 1
+                self.state_manager.game_data.letter_errors[current_index] = error_count
+                
+                # Add to total errors for tie-breaking
+                self.state_manager.add_error()
+                
+                # Mark as red
+                letter_colors[current_index] = 'red'
+                self.state_manager.game_data.letter_colors = letter_colors
+                print(f"Wrong! '{decoded_char}' doesn't match '{target_char}' (errors: {error_count})")
+            
+            # Reset current sequence
+            self.current_sequence = ""
+    
+    def clear_current_input(self):
+        """Clear current Morse input and reset current letter only."""
+        if self.state_manager.current_state == GameState.PLAYING:
+            self.current_sequence = ""
+            # Reset only current letter if it's red
+            current_index = self.state_manager.game_data.current_letter_index
+            letter_colors = self.state_manager.game_data.letter_colors
+            if current_index < len(letter_colors) and letter_colors[current_index] == 'red':
+                letter_colors[current_index] = 'white'
+                self.state_manager.game_data.letter_colors = letter_colors
+                # Reset error count for this letter
+                if current_index in self.state_manager.game_data.letter_errors:
+                    del self.state_manager.game_data.letter_errors[current_index]
+    
+    def check_timeouts(self):
+        """Check for timeouts in Morse code input during gameplay."""
+        from .config import LETTER_GAP
+        
+        if self.state_manager.current_state != GameState.PLAYING:
+            return
+
+        now = time.time()
+        delta = now - getattr(self, 'last_timeout_check', now)
+        self.last_timeout_check = now
+
+        # Check for Morse character completion
+        if self.current_sequence and self.last_element_time is not None:
+            if now - self.last_element_time >= LETTER_GAP:
+                self.check_morse_input()
+                self.last_element_time = now
+        
+        # Check word timer
+        if self.state_manager.is_word_time_expired():
+            print(f"Word time expired! Moving to next word without counting.")
+            self._word_time_expired()
+        
+        # Decrease game time by delta (this preserves bonus time)
+        if self.state_manager.game_data.game_start_time:
+            self.state_manager.game_data.time_remaining = max(0, self.state_manager.game_data.time_remaining - delta)
+            
+            if self.state_manager.game_data.time_remaining <= 0:
+                self.end_game()
+    
+    def _word_completed(self):
+        """Handle successful completion of current word."""
+        self.state_manager.game_data.words_completed += 1
+        print(f"Word completed successfully! Total: {self.state_manager.game_data.words_completed}")
+        
+        # Check for time bonus on hard difficulty
+        if self.state_manager.game_data.difficulty == 'hard':
+            settings = self.state_manager.get_difficulty_settings()
+            bonus_every = settings.get('time_bonus_every_words', 0)
+            bonus_amount = settings.get('time_bonus_amount', 0)
+            
+            if bonus_every > 0 and bonus_amount > 0:
+                if self.state_manager.game_data.words_completed % bonus_every == 0:
+                    # Add bonus time
+                    old_time = self.state_manager.game_data.time_remaining
+                    self.state_manager.game_data.time_remaining += bonus_amount
+                    print(f"TIME BONUS! +{bonus_amount}s added (every {bonus_every} words on hard mode)")
+                    print(f"Time before: {old_time:.1f}s, Time after: {self.state_manager.game_data.time_remaining:.1f}s")
+        
+        self._get_next_word()
+    
+    def _word_time_expired(self):
+        """Handle word time expiration - move to next word without counting."""
+        print(f"Word time expired! Word not counted.")
+        self._get_next_word()
+    
+    def _get_next_word(self):
+        """Get next word and reset state."""
+        # Get new word
+        self.state_manager.game_data.current_word = self.word_generator.get_random_word()
+        self.state_manager.game_data.letter_colors = ['white'] * len(self.state_manager.game_data.current_word)
+        self.state_manager.game_data.current_letter_index = 0
+        self.state_manager.game_data.letter_errors = {}
+        self.current_sequence = ""
+        
+        # Start timer for new word
+        self.state_manager.start_word_timer(self.state_manager.game_data.current_word)
+    
+    def end_game(self):
+        """End the current game session."""
+        # Calculate final score
+        self.state_manager.game_data.score = self.state_manager.game_data.words_completed
+        
+        # Save to high scores
+        settings = self.state_manager.get_difficulty_settings()
+        time_taken = settings['game_duration'] - self.state_manager.game_data.time_remaining
+        self.high_scores.add_score(
+            self.state_manager.game_data.nickname,
+            self.state_manager.game_data.score,
+            self.state_manager.game_data.words_completed,
+            time_taken,
+            self.state_manager.game_data.total_errors,
+            self.state_manager.game_data.difficulty
+        )
+        
+        self.state_manager.change_state(GameState.GAME_OVER)

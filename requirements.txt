@@ -1,0 +1,6 @@
+# Morse Code Game Requirements
+# GPIO handling for Raspberry Pi (optional - falls back to keyboard if not available)
+RPi.GPIO>=0.7.0
+
+# Game engine and UI framework
+pygame>=2.1.0

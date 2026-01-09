@@ -1,0 +1,196 @@
+{
+  "easy": [
+    {
+      "nickname": "123123",
+      "score": 9,
+      "words_completed": 9,
+      "time_taken": 120.0,
+      "errors": 0,
+      "difficulty": "easy",
+      "date": "2026-01-08T18:08:31.459083",
+      "timestamp": 1767884911.459562
+    },
+    {
+      "nickname": "вфыв",
+      "score": 9,
+      "words_completed": 9,
+      "time_taken": 120.0,
+      "errors": 0,
+      "difficulty": "easy",
+      "date": "2026-01-08T22:35:22.072631",
+      "timestamp": 1767900922.07264
+    },
+    {
+      "nickname": "фывфывфы",
+      "score": 9,
+      "words_completed": 9,
+      "time_taken": 120.0,
+      "errors": 3,
+      "difficulty": "easy",
+      "date": "2026-01-08T18:34:33.666436",
+      "timestamp": 1767886473.666947
+    },
+    {
+      "nickname": "фывфыв",
+      "score": 9,
+      "words_completed": 9,
+      "time_taken": 120.0,
+      "errors": 3,
+      "difficulty": "easy",
+      "date": "2026-01-08T21:03:12.206902",
+      "timestamp": 1767895392.206913
+    },
+    {
+      "nickname": "цщщщ",
+      "score": 9,
+      "words_completed": 9,
+      "time_taken": 120.0,
+      "errors": 4,
+      "difficulty": "easy",
+      "date": "2026-01-08T16:00:49.893436",
+      "timestamp": 1767877249.894041
+    },
+    {
+      "nickname": "woo",
+      "score": 8,
+      "words_completed": 8,
+      "time_taken": 120.0,
+      "errors": 1,
+      "difficulty": "easy",
+      "date": "2026-01-08T15:55:46.662678",
+      "timestamp": 1767876946.663484
+    },
+    {
+      "nickname": "фывыфвфв",
+      "score": 8,
+      "words_completed": 8,
+      "time_taken": 120.0,
+      "errors": 2,
+      "difficulty": "easy",
+      "date": "2026-01-08T18:42:26.367668",
+      "timestamp": 1767886946.384532
+    },
+    {
+      "nickname": "woos",
+      "score": 7,
+      "words_completed": 7,
+      "time_taken": 120.0,
+      "errors": 2,
+      "difficulty": "easy",
+      "date": "2026-01-08T15:33:37.036121",
+      "timestamp": 1767875617.036549
+    },
+    {
+      "nickname": "цщщщщ",
+      "score": 7,
+      "words_completed": 7,
+      "time_taken": 120.0,
+      "errors": 3,
+      "difficulty": "easy",
+      "date": "2026-01-08T22:10:46.540104",
+      "timestamp": 1767899446.540117
+    },
+    {
+      "nickname": "asdasdsa",
+      "score": 7,
+      "words_completed": 7,
+      "time_taken": 120.0,
+      "errors": 6,
+      "difficulty": "easy",
+      "date": "2026-01-08T18:25:13.169961",
+      "timestamp": 1767885913.170662
+    },
+    {
+      "nickname": "Ssafsdf",
+      "score": 6,
+      "words_completed": 6,
+      "time_taken": 120.0,
+      "errors": 5,
+      "difficulty": "easy",
+      "date": "2026-01-09T03:24:01.752238",
+      "timestamp": 1767918241.752246
+    }
+  ],
+  "hard": [
+    {
+      "nickname": "1212",
+      "score": 7,
+      "words_completed": 7,
+      "time_taken": 90.0,
+      "errors": 7,
+      "difficulty": "hard",
+      "date": "2026-01-09T02:30:14.888098",
+      "timestamp": 1767915014.888109
+    },
+    {
+      "nickname": "woooooo_12",
+      "score": 6,
+      "words_completed": 6,
+      "time_taken": 90.0,
+      "errors": 1,
+      "difficulty": "hard",
+      "date": "2026-01-09T01:46:10.686056",
+      "timestamp": 1767912370.686071
+    },
+    {
+      "nickname": "фывфвы",
+      "score": 6,
+      "words_completed": 6,
+      "time_taken": 90.0,
+      "errors": 2,
+      "difficulty": "hard",
+      "date": "2026-01-09T02:03:21.460442",
+      "timestamp": 1767913401.460453
+    },
+    {
+      "nickname": "woow",
+      "score": 5,
+      "words_completed": 5,
+      "time_taken": 90.0,
+      "errors": 2,
+      "difficulty": "hard",
+      "date": "2026-01-08T15:35:20.023587",
+      "timestamp": 1767875720.023643
+    },
+    {
+      "nickname": "adasd",
+      "score": 4,
+      "words_completed": 4,
+      "time_taken": 90.0,
+      "errors": 2,
+      "difficulty": "hard",
+      "date": "2026-01-09T02:11:38.873033",
+      "timestamp": 1767913898.873042
+    },
+    {
+      "nickname": "123",
+      "score": 4,
+      "words_completed": 4,
+      "time_taken": 90.0,
+      "errors": 4,
+      "difficulty": "hard",
+      "date": "2026-01-08T18:44:30.582663",
+      "timestamp": 1767887070.582676
+    },
+    {
+      "nickname": "1212",
+      "score": 4,
+      "words_completed": 4,
+      "time_taken": 90.0,
+      "errors": 4,
+      "difficulty": "hard",
+      "date": "2026-01-09T02:06:47.686433",
+      "timestamp": 1767913607.686443
+    },
+    {
+      "nickname": "фвыв",
+      "score": 2,
+      "words_completed": 2,
+      "time_taken": 90.0,
+      "errors": 3,
+      "difficulty": "hard",
+      "date": "2026-01-09T02:14:29.401317",
+      "timestamp": 1767914069.401325
+    }
+  ]
+}
