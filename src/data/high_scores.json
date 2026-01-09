@@ -109,6 +109,16 @@
       "difficulty": "easy",
       "date": "2026-01-09T03:24:01.752238",
       "timestamp": 1767918241.752246
+    },
+    {
+      "nickname": "213123",
+      "score": 2,
+      "words_completed": 2,
+      "time_taken": 120.0,
+      "errors": 15,
+      "difficulty": "easy",
+      "date": "2026-01-09T04:44:35.627520",
+      "timestamp": 1767923075.627531
     }
   ],
   "hard": [
@@ -143,6 +153,16 @@
       "timestamp": 1767913401.460453
     },
     {
+      "nickname": "12321",
+      "score": 6,
+      "words_completed": 6,
+      "time_taken": 90.0,
+      "errors": 5,
+      "difficulty": "hard",
+      "date": "2026-01-09T04:59:35.549269",
+      "timestamp": 1767923975.549278
+    },
+    {
       "nickname": "woow",
       "score": 5,
       "words_completed": 5,
@@ -151,6 +171,16 @@
       "difficulty": "hard",
       "date": "2026-01-08T15:35:20.023587",
       "timestamp": 1767875720.023643
+    },
+    {
+      "nickname": "dasdasd",
+      "score": 5,
+      "words_completed": 5,
+      "time_taken": 90.0,
+      "errors": 3,
+      "difficulty": "hard",
+      "date": "2026-01-09T04:51:03.524887",
+      "timestamp": 1767923463.524897
     },
     {
       "nickname": "adasd",
@@ -191,6 +221,36 @@
       "difficulty": "hard",
       "date": "2026-01-09T02:14:29.401317",
       "timestamp": 1767914069.401325
+    },
+    {
+      "nickname": "sdfjsdfjk",
+      "score": 2,
+      "words_completed": 2,
+      "time_taken": 90.0,
+      "errors": 8,
+      "difficulty": "hard",
+      "date": "2026-01-09T04:18:31.086151",
+      "timestamp": 1767921511.086159
+    },
+    {
+      "nickname": "12313",
+      "score": 2,
+      "words_completed": 2,
+      "time_taken": 90.0,
+      "errors": 17,
+      "difficulty": "hard",
+      "date": "2026-01-09T04:42:18.666765",
+      "timestamp": 1767922938.666775
+    },
+    {
+      "nickname": "12312",
+      "score": 1,
+      "words_completed": 1,
+      "time_taken": 90.0,
+      "errors": 34,
+      "difficulty": "hard",
+      "date": "2026-01-09T04:37:43.809694",
+      "timestamp": 1767922663.809706
     }
   ]
 }

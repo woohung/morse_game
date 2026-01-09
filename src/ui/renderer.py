@@ -917,7 +917,7 @@ class UIRenderer:
                     rules_color = (200, 255, 200)  # Brighter green glow
                 self._draw_terminal_text(rules3, 0, i, rules_color)
             elif i == 21:
-                bonus_content = "• HARD MODE BONUS: +10 seconds every 3rd correct word to help you beat the clock!"
+                bonus_content = "• HARD MODE BONUS: +15 seconds every 3rd correct word to help you beat the clock!"
                 bonus = self._format_terminal_line(bonus_content, terminal_width)
                 # Special golden color for bonus info with glow
                 bonus_color = (255, 220, 100)  # Golden amber

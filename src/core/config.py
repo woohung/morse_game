@@ -13,9 +13,9 @@ PULL_UP_DOWN = 'pull_up'  # 'pull_up' or 'pull_down' depending on wiring
 DIT = 0.2
 
 DOT_DURATION = DIT
-DASH_DURATION = 2 * DIT
+DASH_DURATION = 3 * DIT
 
-LETTER_GAP = 5 * DIT
+LETTER_GAP = 2 * DASH_DURATION
 WORD_GAP   = 7 * DIT
 
 DEBOUNCE_TIME = 0
@@ -39,7 +39,7 @@ DIFFICULTY_SETTINGS = {
         'o_letter_bonus': 1.0,    # Minimal bonus for O letters
         'game_duration': 90.0,     # 1.5 minutes for hard mode
         'time_bonus_every_words': 3,  # Bonus time every N words
-        'time_bonus_amount': 10.0     # Bonus time amount in seconds
+        'time_bonus_amount': 15.0     # Bonus time amount in seconds
     }
 }
 
