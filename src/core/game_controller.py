@@ -99,44 +99,49 @@ class GameController:
         # Try to decode the current sequence
         decoded_char = self.decoder.decode(self.current_sequence)
         
-        if decoded_char:
-            current_word = self.state_manager.game_data.current_word
-            current_index = self.state_manager.game_data.current_letter_index
-            letter_colors = self.state_manager.game_data.letter_colors
-            
-            # Check if we've completed the word
-            if current_index >= len(current_word):
-                return
-            
-            target_char = current_word[current_index]
-            
-            if decoded_char == target_char:
-                # Correct letter found
-                letter_colors[current_index] = 'green'
-                self.state_manager.game_data.letter_colors = letter_colors
-                print(f"Correct! Found '{decoded_char}' at position {current_index}")
-                
-                # Move to next letter
-                self.state_manager.game_data.current_letter_index += 1
-                
-                # Check if word is complete
-                if self.state_manager.game_data.current_letter_index >= len(current_word):
-                    self._word_completed()
-            else:
-                # Wrong letter - increment error count
-                error_count = self.state_manager.game_data.letter_errors.get(current_index, 0) + 1
-                self.state_manager.game_data.letter_errors[current_index] = error_count
-                
-                # Add to total errors for tie-breaking
-                self.state_manager.add_error()
-                
-                # Mark as red
-                letter_colors[current_index] = 'red'
-                self.state_manager.game_data.letter_colors = letter_colors
-                print(f"Wrong! '{decoded_char}' doesn't match '{target_char}' (errors: {error_count})")
-            
-            # Reset current sequence
+        # If decoding failed (unknown pattern), clear input and return
+        if not decoded_char:
+            print(f"Unknown pattern '{self.current_sequence}' - clearing input")
             self.current_sequence = ""
+            return
+        
+        current_word = self.state_manager.game_data.current_word
+        current_index = self.state_manager.game_data.current_letter_index
+        letter_colors = self.state_manager.game_data.letter_colors
+        
+        # Check if we've completed the word
+        if current_index >= len(current_word):
+            return
+        
+        target_char = current_word[current_index]
+        
+        if decoded_char == target_char:
+            # Correct letter found
+            letter_colors[current_index] = 'green'
+            self.state_manager.game_data.letter_colors = letter_colors
+            print(f"Correct! Found '{decoded_char}' at position {current_index}")
+            
+            # Move to next letter
+            self.state_manager.game_data.current_letter_index += 1
+            
+            # Check if word is complete
+            if self.state_manager.game_data.current_letter_index >= len(current_word):
+                self._word_completed()
+        else:
+            # Wrong letter - increment error count
+            error_count = self.state_manager.game_data.letter_errors.get(current_index, 0) + 1
+            self.state_manager.game_data.letter_errors[current_index] = error_count
+            
+            # Add to total errors for tie-breaking
+            self.state_manager.add_error()
+            
+            # Mark as red
+            letter_colors[current_index] = 'red'
+            self.state_manager.game_data.letter_colors = letter_colors
+            print(f"Wrong! '{decoded_char}' doesn't match '{target_char}' (errors: {error_count})")
+        
+        # Reset current sequence
+        self.current_sequence = ""
     
     def clear_current_input(self):
         """Clear current Morse input and reset current letter only."""
@@ -309,25 +314,30 @@ class GameController:
         # Try to decode the current sequence
         decoded_char = self.decoder.decode(self.current_sequence)
         
-        if decoded_char:
-            target_char = self.state_manager.game_data.practice_letter
-            
-            if decoded_char == target_char:
-                # Correct letter found
-                print(f"Practice correct! Found '{decoded_char}'")
-                self.state_manager.game_data.practice_letter_color = "green"
-                self.state_manager.game_data.practice_completed += 1
-                
-                # Schedule new letter generation after delay to show green color
-                self.state_manager.game_data.practice_next_letter_time = time.time() + 0.75
-            else:
-                # Wrong letter
-                print(f"Practice wrong! '{decoded_char}' doesn't match '{target_char}'")
-                self.state_manager.game_data.practice_letter_color = "red"
-                self.state_manager.game_data.practice_errors += 1
-            
-            # Reset current sequence
+        # If decoding failed (unknown pattern), clear input and return
+        if not decoded_char:
+            print(f"Practice: Unknown pattern '{self.current_sequence}' - clearing input")
             self.current_sequence = ""
+            return
+        
+        target_char = self.state_manager.game_data.practice_letter
+        
+        if decoded_char == target_char:
+            # Correct letter found
+            print(f"Practice correct! Found '{decoded_char}'")
+            self.state_manager.game_data.practice_letter_color = "green"
+            self.state_manager.game_data.practice_completed += 1
+            
+            # Schedule new letter generation after delay to show green color
+            self.state_manager.game_data.practice_next_letter_time = time.time() + 0.75
+        else:
+            # Wrong letter
+            print(f"Practice wrong! '{decoded_char}' doesn't match '{target_char}'")
+            self.state_manager.game_data.practice_letter_color = "red"
+            self.state_manager.game_data.practice_errors += 1
+        
+        # Reset current sequence
+        self.current_sequence = ""
     
     def clear_practice_input(self):
         """Clear current Morse input in practice mode."""

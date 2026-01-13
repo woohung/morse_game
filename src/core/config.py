@@ -10,7 +10,7 @@ PULL_UP_DOWN = 'pull_up'  # 'pull_up' or 'pull_down' depending on wiring
 
 
 # Morse timing model
-DIT = 0.2
+DIT = 0.16
 
 DOT_DURATION = DIT
 DASH_DURATION = 3 * DIT
