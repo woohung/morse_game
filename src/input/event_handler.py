@@ -45,6 +45,8 @@ class EventHandler:
             return self._handle_nickname_events(event)
         elif self.state_manager.current_state == GameState.PLAYING:
             return self._handle_game_events(event)
+        elif self.state_manager.current_state == GameState.PRACTICE:
+            return self._handle_practice_events(event)
         elif self.state_manager.current_state == GameState.GAME_OVER:
             return self._handle_game_over_events(event)
         elif self.state_manager.current_state == GameState.HIGH_SCORES:
@@ -61,6 +63,13 @@ class EventHandler:
                     self.space_pressed = False
                     press_duration = time.time() - self.space_press_time
                     self.game_controller.on_key_release(press_duration)
+        elif self.state_manager.current_state == GameState.PRACTICE:
+            if event.key == pygame.K_SPACE and self.gpio_handler.input_mode == 'keyboard':
+                # Handle space bar release for Morse input in practice mode
+                if self.space_pressed:
+                    self.space_pressed = False
+                    press_duration = time.time() - self.space_press_time
+                    self.game_controller.on_practice_key_release(press_duration)
         elif self.state_manager.current_state == GameState.NUMBERED_MENU:
             if event.key == pygame.K_SPACE:
                 # Handle space bar release for Morse input in numbered menu
@@ -85,6 +94,8 @@ class EventHandler:
             action = self.state_manager.get_selected_menu_action()
             if action == "start":
                 self.state_manager.change_state(GameState.DIFFICULTY_SELECT)
+            elif action == "practice":
+                self.game_controller.start_practice_mode()
             elif action == "high_scores":
                 self.state_manager.change_state(GameState.HIGH_SCORES)
             elif action == "exit":
@@ -239,5 +250,26 @@ class EventHandler:
                 if action:
                     # Handle 0 key if needed
                     pass
+        
+        return True
+    
+    def _handle_practice_events(self, event) -> bool:
+        """Handle events in practice mode."""
+        if event.key == pygame.K_ESCAPE:
+            self.state_manager.change_state(GameState.MAIN_MENU)
+        elif event.key == pygame.K_F11:
+            # This will be handled by the main app
+            pass
+        elif event.key == pygame.K_c:
+            # Clear input
+            self.game_controller.clear_practice_input()
+        elif event.key == pygame.K_SPACE:
+            # Handle space bar for Morse input when in keyboard mode
+            if self.gpio_handler.input_mode == 'keyboard':
+                # Simulate key press for Morse input
+                if not self.space_pressed:
+                    self.space_pressed = True
+                    self.space_press_time = time.time()
+                    self.game_controller.on_practice_key_press()
         
         return True

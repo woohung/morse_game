@@ -186,6 +186,8 @@ class UIRenderer:
             self._draw_nickname_input(state_manager)
         elif state_manager.current_state == GameState.PLAYING:
             self._draw_game_screen(state_manager, morse_sequence, current_time)
+        elif state_manager.current_state == GameState.PRACTICE:
+            self._draw_practice_screen(state_manager, morse_sequence, current_time)
         elif state_manager.current_state == GameState.GAME_OVER:
             self._draw_game_over(state_manager)
         elif state_manager.current_state == GameState.HIGH_SCORES:
@@ -197,6 +199,204 @@ class UIRenderer:
         
         pygame.display.flip()
     
+    def _draw_practice_screen(self, state_manager: GameStateManager, morse_sequence: str, current_time: float):
+        """Draw practice mode screen with single letter training and Morse alphabet reference."""
+        from ..core.morse_decoder import MORSE_CODE_DICT
+        
+        terminal_width, terminal_height = self._get_terminal_dimensions()
+        border_color = (100, 255, 100)  # Green phosphor
+        
+        # Add subtle screen flicker effect
+        if random.random() < 0.05:  # 5% chance of flicker
+            flicker_intensity = random.randint(20, 40)
+            border_color = (100 - flicker_intensity, 255 - flicker_intensity, 100 - flicker_intensity)
+        
+        # Top border
+        top_border = "╔" + "═" * (terminal_width - 2) + "╗"
+        self._draw_terminal_text(top_border, 0, 0, border_color)
+        
+        # Content
+        for i in range(1, terminal_height - 1):
+            if i == 1:
+                header_content = "PRACTICE MODE - MORSE TRAINING"
+                header = self._format_terminal_line(header_content, terminal_width)
+                self._draw_terminal_text(header, 0, i, COLORS['title'])
+            elif i == 2:
+                separator = "╠" + "═" * (terminal_width - 2) + "╣"
+                self._draw_terminal_text(separator, 0, i, border_color)
+            elif i == 3:
+                status_content = f"COMPLETED: {state_manager.game_data.practice_completed}  |  ERRORS: {state_manager.game_data.practice_errors}"
+                status = self._format_terminal_line(status_content, terminal_width)
+                self._draw_terminal_text(status, 0, i, COLORS['text'])
+            elif i == 4:
+                separator = "╠" + "─" * (terminal_width - 2) + "╣"
+                self._draw_terminal_text(separator, 0, i, border_color)
+            elif i == 5:
+                target_header = f"TARGET LETTER:"
+                target_line = self._format_terminal_line(target_header, terminal_width)
+                self._draw_terminal_text(target_line, 0, i, COLORS['text'])
+            elif i == 6:
+                empty = "║" + " " * (terminal_width - 2) + "║"
+                self._draw_terminal_text(empty, 0, i, border_color)
+            elif i == 7:
+                empty = "║" + " " * (terminal_width - 2) + "║"
+                self._draw_terminal_text(empty, 0, i, border_color)
+            elif i == 8:
+                # Enhanced centered letter display with large font and scanning effect
+                letter = state_manager.game_data.practice_letter
+                if letter:
+                    # Draw large centered letter with same style as main game
+                    self._draw_enhanced_practice_letter(state_manager, i)
+                else:
+                    empty = self._format_terminal_line("", terminal_width)
+                    self._draw_terminal_text(empty, 0, i, border_color)
+            elif i == 9:
+                # Morse hint is now displayed in _draw_enhanced_practice_letter
+                empty = self._format_terminal_line("", terminal_width)
+                self._draw_terminal_text(empty, 0, i, border_color)
+            elif i == 10:
+                empty = "║" + " " * (terminal_width - 2) + "║"
+                self._draw_terminal_text(empty, 0, i, border_color)
+            elif i == 11:
+                empty = "║" + " " * (terminal_width - 2) + "║"
+                self._draw_terminal_text(empty, 0, i, border_color)
+            elif i == 12:
+                empty = "║" + " " * (terminal_width - 2) + "║"
+                self._draw_terminal_text(empty, 0, i, border_color)
+            elif i == 13:
+                empty = "║" + " " * (terminal_width - 2) + "║"
+                self._draw_terminal_text(empty, 0, i, border_color)
+            elif i == 14:
+                separator = "╠" + "─" * (terminal_width - 2) + "╣"
+                self._draw_terminal_text(separator, 0, i, border_color)
+            elif i == 15:
+                input_header = f"MORSE INPUT:"
+                input_line = self._format_terminal_line(input_header, terminal_width)
+                self._draw_terminal_text(input_line, 0, i, COLORS['text'])
+            elif i == 16:
+                # Centered Morse input with awesome pulsing cursor - same as main game
+                input_text = f"{morse_sequence}"
+                if state_manager.cursor_visible and morse_sequence:
+                    pulse_phase = int(time.time() * 10) % 5  # Very fast pulsing for Morse input
+                    if pulse_phase == 0:
+                        cursor_char = "█"  # Full block
+                    elif pulse_phase == 1:
+                        cursor_char = "▓"  # Medium block
+                    elif pulse_phase == 2:
+                        cursor_char = "▒"  # Light block
+                    elif pulse_phase == 3:
+                        cursor_char = "░"  # Very light block
+                    else:
+                        cursor_char = "○"  # Circle
+                    input_text += cursor_char
+                
+                # Calculate padding to center the input
+                total_input_length = len(input_text)
+                padding = (terminal_width - total_input_length - 4) // 2
+                morse_text = "║ " + " " * padding + input_text + " " * (terminal_width - padding - total_input_length - 4) + " ║"
+                
+                # Add animated background for centered Morse input field
+                char_width, char_height = self.terminal_font.size("X")
+                
+                # Get global offset for centering
+                offset_x, offset_y = self._get_terminal_offset()
+                
+                bg_x = offset_x + ((2 + padding) * char_width)  # Start after centered padding
+                bg_y = offset_y + (i * char_height)
+                bg_width = (len(input_text)) * char_width  # Cover input text + cursor
+                bg_height = char_height
+                
+                if state_manager.cursor_visible and morse_sequence and bg_width > 0:
+                    bg_surface = pygame.Surface((bg_width, bg_height))
+                    bg_surface.set_alpha(40)
+                    bg_pulse = int(time.time() * 4) % 3
+                    if bg_pulse == 0:
+                        bg_surface.fill((100, 200, 255))  # Blue
+                    elif bg_pulse == 1:
+                        bg_surface.fill((255, 200, 100))  # Amber
+                    else:
+                        bg_surface.fill((100, 255, 150))  # Green
+                    self.screen.blit(bg_surface, (bg_x, bg_y))
+                
+                # Draw the Morse input text with enhanced color
+                text_color = COLORS['morse']
+                if state_manager.cursor_visible and morse_sequence:
+                    text_pulse = int(time.time() * 3) % 3
+                    if text_pulse == 0:
+                        text_color = (180, 255, 180)  # Green phosphor
+                    elif text_pulse == 1:
+                        text_color = (200, 255, 255)  # Cyan
+                    else:
+                        text_color = (255, 200, 100)  # Golden
+                
+                self._draw_terminal_text(morse_text, 0, i, text_color)
+            elif i == 18:
+                separator = "╠" + "─" * (terminal_width - 2) + "╣"
+                self._draw_terminal_text(separator, 0, i, border_color)
+            elif i == 19:
+                alphabet_header = "MORSE ALPHABET:"
+                alphabet_line = self._format_terminal_line(alphabet_header, terminal_width)
+                self._draw_terminal_text_bold(alphabet_line, 0, i, COLORS['menu_header'])
+            elif i == 20:
+                separator = "╠" + "─" * (terminal_width - 2) + "╣"
+                self._draw_terminal_text(separator, 0, i, border_color)
+            elif 21 <= i <= 28:
+                # Display Morse alphabet in columns with proper alignment
+                alphabet_start_index = (i - 21) * 3  # 3 letters per line
+                letters = list(MORSE_CODE_DICT.keys())[:26]  # A-Z only
+                alphabet_line_parts = []
+                
+                for j in range(3):
+                    letter_index = alphabet_start_index + j
+                    if letter_index < len(letters):
+                        letter = letters[letter_index]
+                        morse = MORSE_CODE_DICT[letter]
+                        # Fixed width formatting for proper alignment - letter fixed width, morse aligned
+                        alphabet_line_parts.append(f"{letter}  {morse}")
+                
+                # Calculate column width for proper alignment
+                col_width = 10  # Approximate width for each column
+                formatted_parts = []
+                for part in alphabet_line_parts:
+                    formatted_parts.append(part.ljust(col_width))
+                
+                # Use fixed spacing between columns
+                alphabet_text = "".join(formatted_parts)
+                alphabet_line = self._format_terminal_line(alphabet_text, terminal_width)
+                self._draw_terminal_text(alphabet_line, 0, i, COLORS['text'])
+            elif i == 30:
+                separator = "╠" + "─" * (terminal_width - 2) + "╣"
+                self._draw_terminal_text(separator, 0, i, border_color)
+            elif i == 31:
+                inst_header_content = "COMMANDS:"
+                inst_header = self._format_terminal_line(inst_header_content, terminal_width)
+                self._draw_terminal_text(inst_header, 0, i, COLORS['title'])
+            elif i == 32:
+                inst_content = "• SPACE : Input Morse"
+                inst_line = self._format_terminal_line(inst_content, terminal_width)
+                self._draw_terminal_text(inst_line, 0, i, COLORS['hint'])
+            elif i == 33:
+                inst_content = "• C : Clear input"
+                inst_line = self._format_terminal_line(inst_content, terminal_width)
+                self._draw_terminal_text(inst_line, 0, i, COLORS['hint'])
+            elif i == terminal_height - 3:
+                separator = "╠" + "═" * (terminal_width - 2) + "╣"
+                self._draw_terminal_text(separator, 0, i, border_color)
+            elif i == terminal_height - 2:
+                escape_content = "• ESC : Back to menu"
+                escape_line = self._format_terminal_line(escape_content, terminal_width)
+                self._draw_terminal_text(escape_line, 0, i, COLORS['hint'])
+            else:
+                empty = self._format_terminal_line("", terminal_width)
+                self._draw_terminal_text(empty, 0, i, border_color)
+        
+        # Draw BBS-style status bar before bottom border
+        self._draw_status_bar(state_manager)
+        
+        # Bottom border (now above status bar)
+        bottom_border = "╚" + "═" * (terminal_width - 2) + "╝"
+        self._draw_terminal_text(bottom_border, 0, terminal_height - 3, border_color)
+
     def _draw_main_menu(self, state_manager: GameStateManager):
         """Draw main menu screen with retro terminal/BBS style."""
         terminal_width, terminal_height = self._get_terminal_dimensions()
@@ -230,7 +430,7 @@ class UIRenderer:
                     r"| |     |  | |  _  ||  ' / | _   _ | /  [_  /  [_|      ||  |  ||  o  )    ",
                     r"| |___  |  | |  |  ||    \ |  \_/  ||    _]|    _]_|  |_||  |  ||   _/     ",
                     r"|     | |  | |  |  ||     ||   |   ||   [_ |   [_  |  |  |  :  ||  |       ",
-                    r"|     | |  | |  |  ||  .  ||   |   ||     ||     | |  |  |     ||  |       ",
+                    r"|     | |  | |  |  ||  .  ||   |   ||     ||     | |  |     ||  |       ",
                     r"|_____||____||__|__||__|\_||___|___||_____||_____| |__|   \__,_||__|       "
                     r"",
                 ]
@@ -257,7 +457,7 @@ class UIRenderer:
                             r"| |     |  | |  _  ||  ' / | _   _ | /  [_  /  [_|      ||  |  ||  o  )    ",
                             r"| |___  |  | |  |  ||    \ |  \_/  ||    _]|    _]_|  |_||  |  ||   _/     ",
                             r"|     | |  | |  |  ||     ||   |   ||   [_ |   [_  |  |  |  :  ||  |       ",
-                            r"|     | |  | |  |  ||  .  ||   |   ||     ||     | |  |  |     ||  |       ",
+                            r"|     | |  | |  |  ||  .  ||   |   ||     ||     | |  |     ||  |       ",
                             r"|_____||____||__|__||__|\_||___|___||_____||_____| |__|   \__,_||__|       "
                         ]
                         
@@ -290,7 +490,7 @@ class UIRenderer:
                 menu_header_content = "MAIN MENU"
                 menu_header = self._format_terminal_line(menu_header_content, terminal_width)
                 self._draw_terminal_text_bold(menu_header, 0, i, COLORS['menu_header'])
-            elif 16 <= i <= 20:
+            elif 16 <= i <= 21:
                 # Menu options with unified color palette and solid background highlighting
                 option_index = i - 16
                 if option_index < len(state_manager.menu_options):
@@ -366,18 +566,18 @@ class UIRenderer:
                 else:
                     empty = self._format_terminal_line("", terminal_width)
                     self._draw_terminal_text(empty, 0, i, border_color)
-            elif i == 21:
+            elif i == 22:
                 separator = "╠" + "─" * (terminal_width - 2) + "╣"
                 self._draw_terminal_text(separator, 0, i, border_color)
-            elif i == 22:
+            elif i == 23:
                 inst_header_content = "AVAILABLE COMMANDS:"
                 inst_header = self._format_terminal_line(inst_header_content, terminal_width)
                 self._draw_terminal_text(inst_header, 0, i, COLORS['title'])
-            elif i == 23:
+            elif i == 24:
                 inst_content = "• ENTER : Select option"
                 inst_line = self._format_terminal_line(inst_content, terminal_width)
                 self._draw_terminal_text(inst_line, 0, i, COLORS['hint'])
-            elif i == 24:
+            elif i == 25:
                 inst_content = "• ESC : Quit game"
                 inst_line = self._format_terminal_line(inst_content, terminal_width)
                 self._draw_terminal_text(inst_line, 0, i, COLORS['hint'])
@@ -521,12 +721,93 @@ class UIRenderer:
                 char_width = char_widths[i]
                 self._draw_neon_text(morse_code, 
                                    current_x + char_width // 2, 
-                                   word_y + word_font.get_height() + 15,
+                                   word_y + word_font.get_height() + 8,
                                    hint_font, hint_color, None, 1, 
                                    center_x=True)
             
             # Move to next position
             current_x += char_widths[i] + char_spacing
+    
+    def _draw_enhanced_practice_letter(self, state_manager: GameStateManager, terminal_line: int):
+        """Draw current practice letter with large font, color coding, and Morse hint."""
+        from ..core.morse_decoder import MorseDecoder
+        
+        letter = state_manager.game_data.practice_letter
+        letter_color = state_manager.game_data.practice_letter_color
+        
+        if not letter:
+            return
+        
+        # Create large font for letter using retro style
+        from pathlib import Path
+        fonts_dir = Path(__file__).parent.parent.parent / "fonts"
+        
+        # Try custom fonts for the main letter display
+        letter_font_loaded = False
+        for font_name in ["SpecialElite.ttf", "RobotoMono.ttf", "CourierPrime.ttf"]:
+            font_path = fonts_dir / font_name
+            if font_path.exists():
+                try:
+                    letter_font = pygame.font.Font(str(font_path), int(FONT_SIZE * 3.5), bold=True)
+                    letter_font_loaded = True
+                    break
+                except:
+                    continue
+        
+        if not letter_font_loaded:
+            # Use system fonts with retro feel
+            for font_name in ['American Typewriter', 'Courier New', 'Monaco']:
+                try:
+                    letter_font = pygame.font.SysFont(font_name, int(FONT_SIZE * 3.5), bold=True)
+                    break
+                except:
+                    continue
+            else:
+                letter_font = self.title_font  # Fallback to already loaded font
+        
+        # Calculate total width with actual character width
+        char_width = letter_font.size(letter)[0]
+        
+        # Center the letter on screen
+        screen_info = pygame.display.Info()
+        center_x = screen_info.current_w // 2
+        start_x = center_x - char_width // 2
+        letter_y = terminal_line * 20 + 10  # Position within terminal line (back to original)
+        
+        # Determine color based on practice letter state
+        if letter_color == 'green':
+            text_color = COLORS['correct']
+            glow_color = COLORS['neon_glow_green']
+            intensity = 3
+        elif letter_color == 'red':
+            text_color = COLORS['wrong']
+            glow_color = COLORS['neon_glow_red']
+            intensity = 3
+        else:
+            # Default/white state - use orange glow like current letter in game
+            text_color = COLORS['title']
+            glow_color = COLORS['neon_glow_orange']
+            intensity = 3
+        
+        # Add phosphor flicker effect
+        if random.random() < 0.02:  # 2% chance of flicker
+            text_color = tuple(int(c * 0.7) for c in text_color)
+        
+        # Draw neon letter
+        self._draw_neon_text(letter, start_x, letter_y, letter_font, text_color, 
+                            glow_color, intensity)
+        
+        # Draw Morse code hint below the letter
+        if letter:
+            decoder = MorseDecoder()
+            morse_code = decoder.encode(letter)
+            hint_font = pygame.font.SysFont('Courier New', int(FONT_SIZE * 0.6))  # Same size as game mode
+            hint_color = COLORS['hint']
+            self._draw_neon_text(morse_code, 
+                               start_x + char_width // 2,  # Same as game mode
+                               letter_y + letter_font.get_height() + 8,  # Reduced distance to match game mode
+                               hint_font, hint_color, None, 1, 
+                               center_x=True)
     
     def _draw_colored_terminal_text(self, text: str, x: int, y: int, default_color: tuple):
         """Draw terminal text with color codes for individual characters and proper centering."""

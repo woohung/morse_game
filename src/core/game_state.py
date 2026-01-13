@@ -14,6 +14,7 @@ class GameState(Enum):
     DIFFICULTY_SELECT = "difficulty_select"
     NICKNAME_INPUT = "nickname_input"
     PLAYING = "playing"
+    PRACTICE = "practice"  # New practice mode for single letter training
     GAME_OVER = "game_over"
     HIGH_SCORES = "high_scores"
 
@@ -35,6 +36,12 @@ class GameData:
         self.total_errors: int = 0  # Track total errors for tie-breaking
         self.word_start_time: Optional[float] = None  # Track when current word started
         self.word_time_limit: float = WORD_TIME_LIMIT  # Time limit per word in seconds
+        
+        # Practice mode specific data
+        self.practice_letter: str = ""  # Current letter for practice
+        self.practice_letter_color: str = "white"  # Color state for practice letter
+        self.practice_completed: int = 0  # Number of letters completed in practice
+        self.practice_errors: int = 0  # Errors in practice mode
 
 class MenuOption:
     """Menu option class."""
@@ -71,8 +78,9 @@ class GameStateManager:
         """Initialize main menu options."""
         self.menu_options = [
             MenuOption("START TRANSMISSION", "start", 300),
-            MenuOption("OPERATORS LOG", "high_scores", 350),
-            MenuOption("DISCONNECT", "exit", 400)
+            MenuOption("PRACTICE", "practice", 350),
+            MenuOption("OPERATORS LOG", "high_scores", 400),
+            MenuOption("DISCONNECT", "exit", 450)
         ]
         self.selected_menu_index = 0
         self.menu_options[0].selected = True
@@ -118,6 +126,12 @@ class GameStateManager:
                 self.game_data = GameData()
                 self.game_data.difficulty = old_difficulty
             self.game_data.game_start_time = time.time()
+        elif new_state == GameState.PRACTICE:
+            # Initialize practice mode - don't reset letter if already set
+            if not self.game_data.practice_letter:
+                self.game_data.practice_letter = ""
+            self.game_data.practice_completed = 0
+            self.game_data.practice_errors = 0
     
     def move_menu_selection(self, direction: int):
         """Move menu selection up or down."""

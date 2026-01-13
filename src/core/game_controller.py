@@ -3,6 +3,8 @@ Game Controller for Morse Code Game
 Handles game logic and state transitions.
 """
 import time
+import random
+import string
 from typing import Optional
 from .game_state import GameStateManager, GameState
 from .word_generator import WordGenerator
@@ -151,8 +153,13 @@ class GameController:
                     del self.state_manager.game_data.letter_errors[current_index]
     
     def check_timeouts(self):
-        """Check for timeouts in Morse code input during gameplay."""
+        """Check for timeouts in Morse code input during gameplay or practice."""
         from .config import LETTER_GAP
+        
+        # Handle practice mode timeouts
+        if self.state_manager.current_state == GameState.PRACTICE:
+            self.check_practice_timeouts()
+            return
         
         if self.state_manager.current_state != GameState.PLAYING:
             return
@@ -235,3 +242,120 @@ class GameController:
         )
         
         self.state_manager.change_state(GameState.GAME_OVER)
+    
+    def start_practice_mode(self):
+        """Start practice mode for single letter training."""
+        print("Starting practice mode")
+        
+        # Reset practice data
+        self.state_manager.game_data.practice_completed = 0
+        self.state_manager.game_data.practice_errors = 0
+        self.current_sequence = ""
+        self.last_timeout_check = time.time()
+        
+        # Generate first random letter BEFORE changing state
+        self._generate_practice_letter()
+        
+        # Change to practice state AFTER letter is generated
+        self.state_manager.change_state(GameState.PRACTICE)
+    
+    def _generate_practice_letter(self):
+        """Generate a random letter for practice."""
+        # Generate random uppercase letter A-Z
+        self.state_manager.game_data.practice_letter = random.choice(string.ascii_uppercase)
+        self.state_manager.game_data.practice_letter_color = "white"  # Reset color
+        print(f"Practice letter: {self.state_manager.game_data.practice_letter}")
+    
+    def on_practice_key_press(self):
+        """Handle Morse key press during practice."""
+        if self.state_manager.current_state == GameState.PRACTICE:
+            self.state_manager.cursor_visible = True
+            self.state_manager.cursor_timer = time.time()
+    
+    def on_practice_key_release(self, press_duration: float):
+        """Handle Morse key release during practice."""
+        from .config import DEBOUNCE_TIME, DOT_DURATION, DASH_DURATION
+        
+        if self.state_manager.current_state != GameState.PRACTICE:
+            return
+            
+        now = time.time()
+
+        # Ignore debounce
+        if press_duration < DEBOUNCE_TIME:
+            return
+
+        # Determine dot or dash
+        threshold = (DOT_DURATION + DASH_DURATION) / 2
+        if press_duration < threshold:
+            self.current_sequence += "."
+            print("Practice: Added . (dot)")
+        else:
+            self.current_sequence += "-"
+            print("Practice: Added - (dash)")
+
+        print(f"Practice current sequence: {self.current_sequence}")
+
+        # Update timers
+        self.last_element_time = now
+        self.state_manager.cursor_visible = True
+        self.state_manager.cursor_timer = now
+    
+    def check_practice_morse_input(self):
+        """Check if current Morse sequence matches the practice letter."""
+        if not self.current_sequence or self.state_manager.current_state != GameState.PRACTICE:
+            return
+        
+        # Try to decode the current sequence
+        decoded_char = self.decoder.decode(self.current_sequence)
+        
+        if decoded_char:
+            target_char = self.state_manager.game_data.practice_letter
+            
+            if decoded_char == target_char:
+                # Correct letter found
+                print(f"Practice correct! Found '{decoded_char}'")
+                self.state_manager.game_data.practice_letter_color = "green"
+                self.state_manager.game_data.practice_completed += 1
+                
+                # Schedule new letter generation after delay to show green color
+                self.state_manager.game_data.practice_next_letter_time = time.time() + 0.75
+            else:
+                # Wrong letter
+                print(f"Practice wrong! '{decoded_char}' doesn't match '{target_char}'")
+                self.state_manager.game_data.practice_letter_color = "red"
+                self.state_manager.game_data.practice_errors += 1
+            
+            # Reset current sequence
+            self.current_sequence = ""
+    
+    def clear_practice_input(self):
+        """Clear current Morse input in practice mode."""
+        if self.state_manager.current_state == GameState.PRACTICE:
+            self.current_sequence = ""
+            # Reset letter color to white if it was red
+            if self.state_manager.game_data.practice_letter_color == "red":
+                self.state_manager.game_data.practice_letter_color = "white"
+    
+    def check_practice_timeouts(self):
+        """Check for timeouts in Morse code input during practice."""
+        from .config import LETTER_GAP
+        
+        if self.state_manager.current_state != GameState.PRACTICE:
+            return
+
+        now = time.time()
+        delta = now - getattr(self, 'last_timeout_check', now)
+        self.last_timeout_check = now
+
+        # Check for Morse character completion
+        if self.current_sequence and self.last_element_time is not None:
+            if now - self.last_element_time >= LETTER_GAP:
+                self.check_practice_morse_input()
+                self.last_element_time = now
+        
+        # Check if it's time to generate a new letter (after correct answer)
+        if hasattr(self.state_manager.game_data, 'practice_next_letter_time'):
+            if now >= self.state_manager.game_data.practice_next_letter_time:
+                self._generate_practice_letter()
+                delattr(self.state_manager.game_data, 'practice_next_letter_time')
