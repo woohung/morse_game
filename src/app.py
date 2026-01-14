@@ -38,7 +38,8 @@ class MorseApp:
             pin=17,  # Default GPIO pin
             on_press=self.game_controller.on_key_press,
             on_release=self.game_controller.on_key_release,
-            input_mode=input_mode
+            input_mode=input_mode,
+            bounce_time=0.05  # 50ms debounce time for telegraph key
         )
         
         # Initialize event handler
