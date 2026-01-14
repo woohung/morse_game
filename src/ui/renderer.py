@@ -437,22 +437,21 @@ class UIRenderer:
                 line_index = i - 4
                 if line_index < len(title_lines):
                     if line_index == 0:  # "Special for" - with gradient effect
-                        # Create gradient from amber to orange for "Special for"
-                        gradient_start = (255, 220, 150)  # Amber color
-                        gradient_end = (255, 180, 100)    # Orange color
+                        # Create gradient from warm orange-red to deep red for "Special for"
+                        gradient_start = (255, 200, 150)  # Warm orange-red
+                        gradient_end = (200, 50, 50)      # Deep red
                         
                         # Add occasional flicker with gradient colors
                         text_color = gradient_start
                         if random.random() < 0.05:  # 5% chance of glow
                             # Interpolate between start and end for flicker
-                            text_color = (255, 240, 180)  # Brighter amber
+                            text_color = (255, 220, 200)  # Warm orange glow
                         self._draw_terminal_text(self._format_terminal_line(title_lines[line_index], terminal_width), 0, i, text_color)
                     elif line_index == 1:  # Empty line
                         self._draw_terminal_text(self._format_terminal_line("", terminal_width), 0, i, border_color)
                     else:  # ASCII art lines for LINKMEETUP with gradient effect
-                        # Create gradient from bright green to darker green
                         linkmeetup_lines = [
-                            r"__      ____  ____   __  _  ___ ___    ___    ___ ______  __ __  ____      ",
+                            r"._      ____  ____   __  _  ___ ___    ___    ___ ______  __ __  ____      ",
                             r"| |    |    ||    \ |  |/ ]|   |   |  /  _]  /  _]      ||  |  ||    \     ",
                             r"| |     |  | |  _  ||  ' / | _   _ | /  [_  /  [_|      ||  |  ||  o  )    ",
                             r"| |___  |  | |  |  ||    \ |  \_/  ||    _]|    _]_|  |_||  |  ||   _/     ",
@@ -462,8 +461,8 @@ class UIRenderer:
                         ]
                         
                         # Calculate gradient colors for LINKMEETUP
-                        gradient_start = (150, 255, 150)  # Bright green
-                        gradient_end = (50, 150, 50)      # Darker green
+                        gradient_start = (255, 180, 180)  # Bright coral red
+                        gradient_end = (180, 60, 60)      # Deep crimson red
                         
                         # Find the actual index in linkmeetup_lines
                         actual_linkmeetup_index = line_index - 2  # Skip "Special for" and empty line

@@ -55,29 +55,29 @@ FONT_SIZE = 48  # Base font size, will be scaled
 LETTER_SPACING_MULTIPLIER = 0.6  # Spacing between letters as fraction of font size (increased)
 WORD_PADDING = 20  # Padding around word display
 
-# Colors (RGB) - Retro telegraph theme
+# Colors (RGB) - Enhanced retro telegraph theme with better contrast
 COLORS = {
-    'background': (15, 15, 25),        # Dark blue-black like old screens
-    'text': (255, 220, 150),           # Warm amber like old monitors
-    'title': (255, 235, 180),          # Light amber for titles
-    'menu_header': (200, 180, 120),       # Darker amber for menu headers
-    'morse': (255, 200, 100),          # Golden amber for Morse input
-    'decoded': (200, 255, 150),        # Green phosphor like old terminals
-    'hint': (180, 180, 150),           # Muted amber for hints
-    'wrong': (255, 120, 120),          # Red phosphor for errors
-    'correct': (120, 255, 120),        # Bright green phosphor for success
-    'neon_glow_orange': (180, 120, 60),   # Amber glow
-    'neon_glow_green': (60, 140, 60),      # Green phosphor glow
-    'neon_glow_red': (140, 60, 60),        # Red phosphor glow
+    'background': (10, 10, 20),        # Deeper dark blue-black for better contrast
+    'text': (255, 235, 180),           # Brighter warm amber for readability
+    'title': (255, 245, 200),          # Lighter amber for titles with more pop
+    'menu_header': (220, 200, 140),       # Brighter amber for menu headers
+    'morse': (255, 220, 120),          # Brighter golden amber for Morse input
+    'decoded': (150, 255, 150),        # Brighter green phosphor for better visibility
+    'hint': (200, 200, 170),           # Brighter muted amber for hints
+    'wrong': (255, 100, 100),          # Brighter red for errors (more attention-grabbing)
+    'correct': (100, 255, 100),        # Brighter green for success feedback
+    'neon_glow_orange': (200, 140, 80),   # Brighter amber glow
+    'neon_glow_green': (80, 160, 80),      # Brighter green phosphor glow
+    'neon_glow_red': (160, 80, 80),        # Brighter red phosphor glow
     
-    # Unified menu color palette - Retro terminal green phosphor
-    'menu_selected_bg': (40, 120, 60),       # Rich green phosphor background for selected items
-    'menu_selected_text': (200, 255, 200),     # Bright green phosphor text for selected items
-    'menu_selected_border': (100, 255, 120),  # Bright green border for selected items
-    'menu_unselected_bg': (20, 60, 30),        # Dark green background for unselected items
-    'menu_unselected_text': (150, 200, 150),   # Muted green text for unselected items
-    'menu_numbered_bg': (25, 70, 35),         # Background for numbered menu items
-    'menu_border_dark': (30, 80, 40),          # Dark green border
+    # Enhanced menu color palette - Improved contrast and visual hierarchy
+    'menu_selected_bg': (50, 140, 70),       # Brighter green phosphor background for selected items
+    'menu_selected_text': (220, 255, 220),     # Brighter green phosphor text for selected items
+    'menu_selected_border': (120, 255, 140),  # Brighter green border for selected items
+    'menu_unselected_bg': (25, 70, 35),        # Slightly brighter green background for unselected items
+    'menu_unselected_text': (170, 220, 170),   # Brighter muted green text for unselected items
+    'menu_numbered_bg': (30, 80, 40),         # Brighter background for numbered menu items
+    'menu_border_dark': (35, 90, 45),          # Brighter dark green border
 }
 
 # File paths
