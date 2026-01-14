@@ -10,10 +10,34 @@ from typing import Optional
 # Import application components
 from .core.game_state import GameStateManager
 from .core.game_controller import GameController
-from .core.config import SCREEN_WIDTH, SCREEN_HEIGHT, init_display
+from .core.config import (SCREEN_WIDTH, SCREEN_HEIGHT, init_display, 
+                          TARGET_FPS, ENABLE_CRT_EFFECT, ENABLE_NEON_EFFECTS)
 from .ui.renderer import UIRenderer
 from .input.gpio_handler import GPIOHandler
 from .input.event_handler import EventHandler
+
+
+def update_performance_settings(args):
+    """Update performance settings based on command line arguments."""
+    global TARGET_FPS, ENABLE_CRT_EFFECT, ENABLE_NEON_EFFECTS
+    
+    if "--low-fps" in args:
+        TARGET_FPS = 10
+        print("Low FPS mode enabled (10 FPS)")
+    
+    if "--no-crt" in args:
+        ENABLE_CRT_EFFECT = False
+        print("CRT effect disabled")
+    
+    if "--no-neon" in args:
+        ENABLE_NEON_EFFECTS = False
+        print("Neon effects disabled")
+    
+    if "--high-performance" in args:
+        TARGET_FPS = 15
+        ENABLE_CRT_EFFECT = False
+        ENABLE_NEON_EFFECTS = False
+        print("High performance mode enabled")
 
 
 class MorseApp:
@@ -51,6 +75,7 @@ class MorseApp:
         
         # Clock for frame rate control
         self.clock = pygame.time.Clock()
+        self.target_fps = TARGET_FPS
     
     def _setup_display(self):
         """Set up the display based on configuration."""
@@ -96,7 +121,7 @@ class MorseApp:
                 self.ui_renderer.render(self.state_manager, self.game_controller.current_sequence)
                 
                 # Control frame rate
-                self.clock.tick(30)
+                self.clock.tick(self.target_fps)
                 
         except KeyboardInterrupt:
             print("\nShutting down...")
@@ -146,6 +171,9 @@ def main():
     
     # Parse command line arguments
     fullscreen, input_mode, debug_mode = parse_arguments()
+    
+    # Update performance settings based on arguments
+    update_performance_settings(sys.argv)
     
     # Initialize display settings
     init_display()

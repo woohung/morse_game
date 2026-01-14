@@ -7,7 +7,9 @@ import time
 import random
 from typing import Optional, List, Dict, Any
 from ..core.game_state import GameStateManager, GameState, GameData, MenuOption
-from ..core.config import COLORS, SCREEN_WIDTH, SCREEN_HEIGHT, FONT_SIZE, LETTER_SPACING_MULTIPLIER, WORD_PADDING
+from ..core.config import (COLORS, SCREEN_WIDTH, SCREEN_HEIGHT, FONT_SIZE, 
+                          LETTER_SPACING_MULTIPLIER, WORD_PADDING, 
+                          ENABLE_CRT_EFFECT, ENABLE_NEON_EFFECTS)
 
 
 class UIRenderer:
@@ -85,60 +87,63 @@ class UIRenderer:
         self.terminal_font_bold = pygame.font.SysFont('Courier New', 20, bold=True)  # Bold version for headers
     
     def _create_crt_effect(self, surface: pygame.Surface) -> pygame.Surface:
-        """Create CRT monitor effect with scanlines."""
+        """Create optimized CRT monitor effect with scanlines."""
         crt_surface = surface.copy()
         
-        # Add subtle scanlines
-        for y in range(0, crt_surface.get_height(), 3):
-            pygame.draw.line(crt_surface, (0, 0, 0, 30), 
+        # Optimized scanlines - draw every 4th line instead of every 3rd
+        surface_height = crt_surface.get_height()
+        for y in range(0, surface_height, 4):
+            pygame.draw.line(crt_surface, (0, 0, 0, 25), 
                            (0, y), (crt_surface.get_width(), y))
         
-        # Add slight vignette effect
-        vignette = pygame.Surface(crt_surface.get_size(), pygame.SRCALPHA)
-        center_x, center_y = crt_surface.get_width() // 2, crt_surface.get_height() // 2
+        # Optimized vignette - use larger steps and pre-calculated values
+        surface_width = crt_surface.get_width()
+        center_x, center_y = surface_width // 2, surface_height // 2
         max_dist = ((center_x ** 2 + center_y ** 2) ** 0.5)
         
-        for x in range(0, crt_surface.get_width(), 10):
-            for y in range(0, crt_surface.get_height(), 10):
+        # Create vignette surface once and use larger steps
+        vignette = pygame.Surface(crt_surface.get_size(), pygame.SRCALPHA)
+        
+        # Use larger steps (20 instead of 10) for better performance
+        for x in range(0, surface_width, 20):
+            for y in range(0, surface_height, 20):
                 dist = ((x - center_x) ** 2 + (y - center_y) ** 2) ** 0.5
-                alpha = int(20 * (dist / max_dist))
-                pygame.draw.circle(vignette, (0, 0, 0, alpha), (x, y), 5)
+                alpha = int(15 * (dist / max_dist))  # Reduced alpha
+                pygame.draw.circle(vignette, (0, 0, 0, alpha), (x, y), 8)  # Larger radius
         
         crt_surface.blit(vignette, (0, 0))
         return crt_surface
 
     def _create_neon_text(self, text: str, font: pygame.font.Font, color: tuple, 
                          glow_color: tuple = None, intensity: int = 1) -> pygame.Surface:
-        """Create text with subtle glow effect."""
+        """Create optimized text with subtle glow effect."""
+        if not ENABLE_NEON_EFFECTS or intensity <= 1:
+            # Skip glow effects entirely if disabled or low intensity
+            return font.render(text, True, color)
+        
         if glow_color is None:
             glow_color = tuple(c // 3 for c in color)
         
         # Create text surface
         text_surface = font.render(text, True, color)
         
-        # Create glow surfaces with reduced intensity
-        glow_surfaces = []
-        for i in range(min(intensity, 2), 0, -1):  # Cap intensity at 2
-            alpha = 30 // i  # Reduced alpha
-            glow_color_with_alpha = (*glow_color, alpha)
-            
-            # Create surface for this glow layer
-            glow_surface = pygame.Surface(text_surface.get_size(), pygame.SRCALPHA)
-            glow_text = font.render(text, True, glow_color_with_alpha)
-            glow_surface.blit(glow_text, (0, 0))
-            
-            # Apply subtle blur effect by offsetting
-            for offset in [(-i, -i), (i, -i), (-i, i), (i, i)]:  # Reduced offsets
-                glow_surface.blit(glow_text, offset)
-            
-            glow_surfaces.append(glow_surface)
+        # Optimized glow - reduced intensity and layers for performance
+        # Create single glow layer instead of multiple
+        glow_surface = pygame.Surface(text_surface.get_size(), pygame.SRCALPHA)
+        alpha = 20  # Reduced alpha for performance
+        glow_color_with_alpha = (*glow_color, alpha)
         
-        # Combine all glow layers
+        # Render glow text once
+        glow_text = font.render(text, True, glow_color_with_alpha)
+        glow_surface.blit(glow_text, (0, 0))
+        
+        # Apply simplified blur with fewer offsets
+        for offset in [(-1, -1), (1, 1)]:  # Only 2 offsets instead of 4
+            glow_surface.blit(glow_text, offset)
+        
+        # Combine glow and text
         final_surface = pygame.Surface(text_surface.get_size(), pygame.SRCALPHA)
-        for glow_surface in glow_surfaces:
-            final_surface.blit(glow_surface, (0, 0))
-        
-        # Blit the actual text on top
+        final_surface.blit(glow_surface, (0, 0))
         final_surface.blit(text_surface, (0, 0))
         
         return final_surface
@@ -193,9 +198,10 @@ class UIRenderer:
         elif state_manager.current_state == GameState.HIGH_SCORES:
             self._draw_high_scores(state_manager)
         
-        # Apply CRT effect for retro monitor feel
-        crt_surface = self._create_crt_effect(self.screen)
-        self.screen.blit(crt_surface, (0, 0))
+        # Apply CRT effect for retro monitor feel (if enabled)
+        if ENABLE_CRT_EFFECT:
+            crt_surface = self._create_crt_effect(self.screen)
+            self.screen.blit(crt_surface, (0, 0))
         
         pygame.display.flip()
     

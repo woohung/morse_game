@@ -51,6 +51,12 @@ SCREEN_WIDTH = 1920  # Default, will be updated
 SCREEN_HEIGHT = 1080  # Default, will be updated
 FONT_SIZE = 48  # Base font size, will be scaled
 
+# Performance settings for Raspberry Pi 4
+TARGET_FPS = 20  # Reduced from 30 for better performance on RPi 4
+ENABLE_CRT_EFFECT = True  # Can be disabled for performance
+ENABLE_NEON_EFFECTS = True  # Can be disabled for performance
+ENABLE_PARTICLE_EFFECTS = False  # Disabled by default for performance
+
 # Typography settings
 LETTER_SPACING_MULTIPLIER = 0.6  # Spacing between letters as fraction of font size (increased)
 WORD_PADDING = 20  # Padding around word display
@@ -90,6 +96,7 @@ os.makedirs(os.path.dirname(RESULTS_FILE), exist_ok=True)
 def init_display():
     """Initialize display settings based on actual display resolution."""
     global SCREEN_WIDTH, SCREEN_HEIGHT, FONT_SIZE, SCREEN_INFO
+    global TARGET_FPS, ENABLE_CRT_EFFECT, ENABLE_NEON_EFFECTS
     
     try:
         import pygame
@@ -103,7 +110,25 @@ def init_display():
         # Scale font size based on display resolution
         FONT_SIZE = max(24, int(min(SCREEN_WIDTH, SCREEN_HEIGHT) * 0.03))
         
+        # Auto-adjust performance settings for Raspberry Pi
+        import platform
+        import subprocess
+        
+        try:
+            # Check if running on Raspberry Pi
+            with open('/proc/cpuinfo', 'r') as f:
+                cpuinfo = f.read()
+                if 'BCM' in cpuinfo or 'Raspberry Pi' in cpuinfo:
+                    print("Raspberry Pi detected - applying performance optimizations")
+                    # Further optimize for RPi
+                    TARGET_FPS = 15  # Even lower FPS for RPi
+                    ENABLE_CRT_EFFECT = False  # Disable CRT by default on RPi
+                    ENABLE_NEON_EFFECTS = False  # Disable neon by default on RPi
+        except:
+            pass  # Not on RPi or can't detect
+        
         print(f"Display initialized: {SCREEN_WIDTH}x{SCREEN_HEIGHT}, Font size: {FONT_SIZE}")
+        print(f"Performance settings: FPS={TARGET_FPS}, CRT={ENABLE_CRT_EFFECT}, Neon={ENABLE_NEON_EFFECTS}")
         
     except Exception as e:
         print(f"Error initializing display: {e}")
