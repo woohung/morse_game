@@ -44,11 +44,11 @@ DIFFICULTY_SETTINGS = {
 }
 
 
-# Display settings - will be set based on actual display resolution
+# Display settings - optimized for Raspberry Pi 4 performance
 # These will be updated at runtime to match the display
 SCREEN_INFO = None  # Will store display info
-SCREEN_WIDTH = 1920  # Default, will be updated
-SCREEN_HEIGHT = 1080  # Default, will be updated
+SCREEN_WIDTH = 1280  # Optimized resolution for RPi 4
+SCREEN_HEIGHT = 720   # Optimized resolution for RPi 4
 FONT_SIZE = 48  # Base font size, will be scaled
 
 # Performance settings for Raspberry Pi 4
@@ -102,13 +102,15 @@ def init_display():
         import pygame
         pygame.display.init()
         
-        # Get the primary display info
+        # Get the primary display info for reference
         SCREEN_INFO = pygame.display.Info()
-        SCREEN_WIDTH = SCREEN_INFO.current_w
-        SCREEN_HEIGHT = SCREEN_INFO.current_h
         
-        # Scale font size based on display resolution
-        FONT_SIZE = max(24, int(min(SCREEN_WIDTH, SCREEN_HEIGHT) * 0.03))
+        # Use optimized resolution for RPi 4 instead of auto-detection
+        # This ensures consistent performance across different displays
+        print(f"Using optimized resolution: {SCREEN_WIDTH}x{SCREEN_HEIGHT}")
+        
+        # Scale font size based on our optimized resolution
+        FONT_SIZE = max(24, int(min(SCREEN_WIDTH, SCREEN_HEIGHT) * 0.04))  # Slightly larger font for 720p
         
         # Auto-adjust performance settings for Raspberry Pi
         import platform
