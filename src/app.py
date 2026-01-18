@@ -11,10 +11,12 @@ from typing import Optional
 from .core.game_state import GameStateManager
 from .core.game_controller import GameController
 from .core.config import (SCREEN_WIDTH, SCREEN_HEIGHT, init_display, 
-                          TARGET_FPS, ENABLE_CRT_EFFECT, ENABLE_NEON_EFFECTS)
+                          TARGET_FPS, ENABLE_CRT_EFFECT, ENABLE_NEON_EFFECTS,
+                          GPIO_PIN, MEGOHMMETER_PIN)
 from .ui.renderer import UIRenderer
 from .input.gpio_handler import GPIOHandler
 from .input.event_handler import EventHandler
+from .hardware.megohmmeter_control import create_megohmmeter_controller
 
 
 def update_performance_settings(args):
@@ -59,12 +61,20 @@ class MorseApp:
         
         # Initialize GPIO handler
         self.gpio_handler = GPIOHandler(
-            pin=17,  # Default GPIO pin
+            pin=GPIO_PIN,  # Use config GPIO pin
             on_press=self.game_controller.on_key_press,
             on_release=self.game_controller.on_key_release,
             input_mode=input_mode,
             bounce_time=0.05  # 50ms debounce time for telegraph key
         )
+        
+        # Initialize megohmmeter controller
+        self.megohmmeter = create_megohmmeter_controller(
+            meter_pin=MEGOHMMETER_PIN,
+            key_pin=GPIO_PIN,
+            use_mock=None  # Auto-detect
+        )
+        self.megohmmeter.initialize()
         
         # Initialize event handler
         self.event_handler = EventHandler(
@@ -131,6 +141,7 @@ class MorseApp:
     def cleanup(self):
         """Clean up resources."""
         self.gpio_handler.stop()
+        self.megohmmeter.cleanup()
         pygame.quit()
 
 

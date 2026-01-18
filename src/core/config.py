@@ -7,6 +7,7 @@ from pathlib import Path
 # GPIO Configuration
 GPIO_PIN = 17  # Default GPIO pin for the telegraph key (BCM numbering)
 PULL_UP_DOWN = 'pull_up'  # 'pull_up' or 'pull_down' depending on wiring
+MEGOHMMETER_PIN = 13  # GPIO pin for megohmmeter needle control (PWM)
 
 
 # Morse timing model
@@ -48,7 +49,7 @@ DIFFICULTY_SETTINGS = {
 # These will be updated at runtime to match the display
 SCREEN_INFO = None  # Will store display info
 SCREEN_WIDTH = 1280  # Optimized resolution for RPi 4
-SCREEN_HEIGHT = 720   # Optimized resolution for RPi 4
+SCREEN_HEIGHT = 1024   # Optimized resolution for RPi 4
 FONT_SIZE = 48  # Base font size, will be scaled
 
 # Performance settings for Raspberry Pi 4
