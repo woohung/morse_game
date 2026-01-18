@@ -10,6 +10,7 @@ from .game_state import GameStateManager, GameState
 from .word_generator import WordGenerator
 from .morse_decoder import MorseDecoder
 from ..data.high_scores import HighScoreManager
+from ..hardware.megohmmeter_control import MegohmmeterController, MockMegohmmeterController
 
 
 class GameController:
@@ -23,6 +24,33 @@ class GameController:
         self.current_sequence = ""
         self.last_element_time: Optional[float] = None
         self.last_timeout_check = time.time()  # Initialize timeout check timer
+        
+        # Initialize megohmmeter
+        self.megohmmeter = self._initialize_megohmmeter()
+    
+    def _initialize_megohmmeter(self):
+        """Initialize megohmmeter controller."""
+        from .config import MEGOHMMETER_PIN, MEGOHMMETER_PWM_FREQUENCY
+        
+        try:
+            # Try to initialize real megohmmeter
+            megohmmeter = MegohmmeterController(
+                meter_pin=MEGOHMMETER_PIN,
+                pwm_frequency=MEGOHMMETER_PWM_FREQUENCY
+            )
+            if megohmmeter.initialize():
+                print(f"Мегомметр инициализирован на GPIO {MEGOHMMETER_PIN}")
+                return megohmmeter
+            else:
+                print("Не удалось инициализировать мегомметр, используем mock")
+        except Exception as e:
+            print(f"Ошибка при инициализации мегомметра: {e}")
+        
+        # Fallback to mock
+        return MockMegohmmeterController(
+            meter_pin=MEGOHMMETER_PIN,
+            pwm_frequency=MEGOHMMETER_PWM_FREQUENCY
+        )
     
     def start_new_game(self):
         """Start a new game session."""
@@ -61,6 +89,9 @@ class GameController:
         if self.state_manager.current_state == GameState.PLAYING:
             self.state_manager.cursor_visible = True
             self.state_manager.cursor_timer = time.time()
+            # Move megohmmeter needle to maximum when key is pressed
+            if self.megohmmeter:
+                self.megohmmeter.key_pressed()
     
     def on_key_release(self, press_duration: float):
         """Handle Morse key release during gameplay."""
@@ -68,6 +99,10 @@ class GameController:
         
         if self.state_manager.current_state != GameState.PLAYING:
             return
+        
+        # Return megohmmeter needle to zero when key is released
+        if self.megohmmeter:
+            self.megohmmeter.key_released()
             
         now = time.time()
 
@@ -231,6 +266,10 @@ class GameController:
     
     def end_game(self):
         """End the current game session."""
+        # Clean up megohmmeter resources
+        if self.megohmmeter:
+            self.megohmmeter.cleanup()
+            
         # Calculate final score
         self.state_manager.game_data.score = self.state_manager.game_data.words_completed
         
@@ -276,6 +315,9 @@ class GameController:
         if self.state_manager.current_state == GameState.PRACTICE:
             self.state_manager.cursor_visible = True
             self.state_manager.cursor_timer = time.time()
+            # Move megohmmeter needle to maximum when key is pressed
+            if self.megohmmeter:
+                self.megohmmeter.key_pressed()
     
     def on_practice_key_release(self, press_duration: float):
         """Handle Morse key release during practice."""
@@ -283,6 +325,10 @@ class GameController:
         
         if self.state_manager.current_state != GameState.PRACTICE:
             return
+        
+        # Return megohmmeter needle to zero when key is released
+        if self.megohmmeter:
+            self.megohmmeter.key_released()
             
         now = time.time()
 

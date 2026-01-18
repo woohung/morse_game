@@ -7,7 +7,11 @@ from pathlib import Path
 # GPIO Configuration
 GPIO_PIN = 17  # Default GPIO pin for the telegraph key (BCM numbering)
 PULL_UP_DOWN = 'pull_up'  # 'pull_up' or 'pull_down' depending on wiring
+
+# Megohmmeter configuration
 MEGOHMMETER_PIN = 13  # GPIO pin for megohmmeter needle control (PWM)
+MEGOHMMETER_PWM_FREQUENCY = 1000  # PWM frequency for smooth needle movement
+MEGOHMMETER_SMOOTH_TRANSITION = True  # Enable smooth needle transitions
 
 
 # Morse timing model
