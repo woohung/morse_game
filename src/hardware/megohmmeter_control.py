@@ -149,8 +149,8 @@ class MegohmmeterController:
         if self.transition_thread and self.transition_thread.is_alive():
             self.transition_thread.join(timeout=0.05)
         
-        # Устанавливаем начальное отклонение (базовое + амплитуда точки)
-        initial_value = self.baseline_force + self.dot_amplitude
+        # Устанавливаем начальное отклонение (амплитуда точки)
+        initial_value = self.dot_amplitude
         if self.meter_device:
             self.meter_device.value = initial_value
             self.current_value = initial_value
@@ -165,7 +165,7 @@ class MegohmmeterController:
         if self.transition_thread and self.transition_thread.is_alive():
             self.transition_thread.join(timeout=0.05)
         
-        # Возвращаем к базовому подпору (оттягивающая сила)
+        # Возвращаем к базовому подпору (оттягивающая сила в обратную сторону)
         if self.meter_device:
             self.meter_device.value = self.baseline_force
             self.current_value = self.baseline_force
@@ -176,7 +176,7 @@ class MegohmmeterController:
         if not self.is_key_pressed:
             return
             
-        target_value = self.baseline_force + self.dot_amplitude
+        target_value = self.dot_amplitude
         print(f"Мегомметр: применяем точку - амплитуда {target_value:.2f}")
         self._smooth_transition_to(target_value, duration=0.15)
     
@@ -185,7 +185,7 @@ class MegohmmeterController:
         if not self.is_key_pressed:
             return
             
-        target_value = self.baseline_force + self.dash_amplitude
+        target_value = self.dash_amplitude
         print(f"Мегомметр: применяем тире - амплитуда {target_value:.2f}")
         self._smooth_transition_to(target_value, duration=0.25)
     
@@ -292,8 +292,8 @@ class MockMegohmmeterController(MegohmmeterController):
         if self.transition_thread and self.transition_thread.is_alive():
             self.transition_thread.join(timeout=0.05)
         
-        # Устанавливаем начальное отклонение (базовое + амплитуда точки)
-        initial_value = self.baseline_force + self.dot_amplitude
+        # Устанавливаем начальное отклонение (амплитуда точки)
+        initial_value = self.dot_amplitude
         self.current_value = initial_value
         print(f"Mock мегомметр: начальное отклонение установлено на {initial_value:.2f}")
     
@@ -306,7 +306,7 @@ class MockMegohmmeterController(MegohmmeterController):
         if self.transition_thread and self.transition_thread.is_alive():
             self.transition_thread.join(timeout=0.05)
         
-        # Возвращаем к базовому подпору (оттягивающая сила)
+        # Возвращаем к базовому подпору (оттягивающая сила в обратную сторону)
         self.current_value = self.baseline_force
         print(f"Mock мегомметр: базовый подпор установлен на {self.baseline_force:.2f}")
     
@@ -315,7 +315,7 @@ class MockMegohmmeterController(MegohmmeterController):
         if not self.is_key_pressed:
             return
             
-        target_value = self.baseline_force + self.dot_amplitude
+        target_value = self.dot_amplitude
         print(f"Mock мегомметр: применяем точку - амплитуда {target_value:.2f}")
         self.current_value = target_value
     
@@ -324,7 +324,7 @@ class MockMegohmmeterController(MegohmmeterController):
         if not self.is_key_pressed:
             return
             
-        target_value = self.baseline_force + self.dash_amplitude
+        target_value = self.dash_amplitude
         print(f"Mock мегомметр: применяем тире - амплитуда {target_value:.2f}")
         self.current_value = target_value
     
