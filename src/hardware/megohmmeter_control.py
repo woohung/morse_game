@@ -165,11 +165,11 @@ class MegohmmeterController:
         if self.transition_thread and self.transition_thread.is_alive():
             self.transition_thread.join(timeout=0.05)
         
-        # Возвращаем к базовому подпору (оттягивающая сила в обратную сторону)
+        # Возвращаем к базовому подпору (отрицательное значение для оттягивания)
         if self.meter_device:
             self.meter_device.value = self.baseline_force
             self.current_value = self.baseline_force
-            print(f"Мегомметр: базовый подпор установлен на {self.baseline_force:.2f}")
+            print(f"Мегомметр: базовый подпор установлен на {self.baseline_force:.2f} (оттягивание)")
     
     def apply_dot(self):
         """Применить амплитуду точки (короткое отклонение)."""
@@ -238,11 +238,11 @@ class MegohmmeterController:
         if self.transition_thread and self.transition_thread.is_alive():
             self.transition_thread.join(timeout=0.05)
         
-        # Принудительно устанавливаем базовый подпор
+        # Принудительно устанавливаем базовый подпор (отрицательное значение)
         if self.meter_device:
             self.meter_device.value = self.baseline_force
             self.current_value = self.baseline_force
-            print(f"Мегомметр: принудительно установлен базовый подпор {self.baseline_force:.2f}")
+            print(f"Мегомметр: принудительно установлен базовый подпор {self.baseline_force:.2f} (оттягивание)")
     
     def cleanup(self):
         """Очистка ресурсов."""
@@ -257,7 +257,7 @@ class MegohmmeterController:
         if self.meter_device:
             self.meter_device.value = self.baseline_force
             self.current_value = self.baseline_force
-            print(f"Мегомметр: базовый подпор установлен перед закрытием {self.baseline_force:.2f}")
+            print(f"Мегомметр: базовый подпор установлен перед закрытием {self.baseline_force:.2f} (оттягивание)")
             self.meter_device.close()
             self.meter_device = None
             
@@ -306,9 +306,9 @@ class MockMegohmmeterController(MegohmmeterController):
         if self.transition_thread and self.transition_thread.is_alive():
             self.transition_thread.join(timeout=0.05)
         
-        # Возвращаем к базовому подпору (оттягивающая сила в обратную сторону)
+        # Возвращаем к базовому подпору (отрицательное значение для оттягивания)
         self.current_value = self.baseline_force
-        print(f"Mock мегомметр: базовый подпор установлен на {self.baseline_force:.2f}")
+        print(f"Mock мегомметр: базовый подпор установлен на {self.baseline_force:.2f} (оттягивание)")
     
     def apply_dot(self):
         """Применить амплитуду точки (короткое отклонение)."""
@@ -337,9 +337,9 @@ class MockMegohmmeterController(MegohmmeterController):
         if self.transition_thread and self.transition_thread.is_alive():
             self.transition_thread.join(timeout=0.05)
         
-        # Принудительно устанавливаем базовый подпор
+        # Принудительно устанавливаем базовый подпор (отрицательное значение)
         self.current_value = self.baseline_force
-        print(f"Mock мегомметр: принудительно установлен базовый подпор {self.baseline_force:.2f}")
+        print(f"Mock мегомметр: принудительно установлен базовый подпор {self.baseline_force:.2f} (оттягивание)")
     
     def cleanup(self):
         """Mock очистка."""
