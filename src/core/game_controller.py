@@ -56,6 +56,10 @@ class GameController:
         """Start a new game session."""
         print(f"Starting new game for player: {self.state_manager.game_data.nickname}")
         
+        # Reset megohmmeter needle before starting new game
+        if self.megohmmeter:
+            self.megohmmeter.force_reset()
+        
         # Set up difficulty-based settings
         difficulty = self.state_manager.game_data.difficulty
         settings = self.state_manager.get_difficulty_settings()
@@ -199,9 +203,13 @@ class GameController:
         # Handle practice mode timeouts
         if self.state_manager.current_state == GameState.PRACTICE:
             self.check_practice_timeouts()
+            # Periodically ensure needle is at zero when not pressed in practice mode
+            self._ensure_needle_at_zero()
             return
         
         if self.state_manager.current_state != GameState.PLAYING:
+            # Ensure needle is at zero when not in playing state
+            self._ensure_needle_at_zero()
             return
 
         now = time.time()
@@ -225,6 +233,19 @@ class GameController:
             
             if self.state_manager.game_data.time_remaining <= 0:
                 self.end_game()
+    
+    def _ensure_needle_at_zero(self):
+        """Ensure needle is at zero when key should not be pressed."""
+        if self.megohmmeter and hasattr(self.megohmmeter, 'current_value'):
+            # Only check if we have access to GPIO handler state
+            if hasattr(self, '_last_gpio_state_check'):
+                if time.time() - self._last_gpio_state_check > 0.5:  # Check every 0.5 seconds
+                    if self.megohmmeter.current_value > 0.1:  # If needle is not at zero
+                        print("Мегомметр: обнаружено отклонение стрелки, принудительный сброс")
+                        self.megohmmeter.force_reset()
+                    self._last_gpio_state_check = time.time()
+            else:
+                self._last_gpio_state_check = time.time()
     
     def _word_completed(self):
         """Handle successful completion of current word."""
@@ -290,6 +311,10 @@ class GameController:
     def start_practice_mode(self):
         """Start practice mode for single letter training."""
         print("Starting practice mode")
+        
+        # Reset megohmmeter needle before starting practice mode
+        if self.megohmmeter:
+            self.megohmmeter.force_reset()
         
         # Reset practice data
         self.state_manager.game_data.practice_completed = 0

@@ -135,34 +135,59 @@ class MegohmmeterController:
     def key_pressed(self):
         """Обработчик нажатия на телеграфный ключ - стрелка на максимум."""
         print("Мегомметр: ключ нажат - стрелка на максимум")
-        # Останавливаем предыдущий переход если он идет
+        # Принудительно останавливаем все переходы
         self.transition_running = False
         if self.transition_thread and self.transition_thread.is_alive():
-            self.transition_thread.join(timeout=0.1)
+            self.transition_thread.join(timeout=0.05)
         
-        # Устанавливаем стрелку на максимум немедленно
-        self.set_value(1.0, smooth=False)
+        # Жестко устанавливаем максимальное значение
+        if self.meter_device:
+            self.meter_device.value = 1.0
+            self.current_value = 1.0
+            print(f"Мегомметр: значение жестко установлено на 1.00")
     
     def key_released(self):
         """Обработчик отпускания телеграфного ключа - стрелка на ноль."""
         print("Мегомметр: ключ отпущен - стрелка на ноль")
-        # Останавливаем предыдущий переход если он идет
+        # Принудительно останавливаем все переходы
         self.transition_running = False
         if self.transition_thread and self.transition_thread.is_alive():
-            self.transition_thread.join(timeout=0.1)
+            self.transition_thread.join(timeout=0.05)
         
-        # Устанавливаем стрелку на ноль немедленно
-        self.set_value(0.0, smooth=False)
+        # Жестко устанавливаем нулевое значение
+        if self.meter_device:
+            self.meter_device.value = 0.0
+            self.current_value = 0.0
+            print(f"Мегомметр: значение жестко установлено на 0.00")
+    
+    def force_reset(self):
+        """Принудительно сбросить стрелку в нулевое положение."""
+        print("Мегомметр: принудительный сброс стрелки в ноль")
+        # Останавливаем все переходы
+        self.transition_running = False
+        if self.transition_thread and self.transition_thread.is_alive():
+            self.transition_thread.join(timeout=0.05)
+        
+        # Принудительно устанавливаем ноль
+        if self.meter_device:
+            self.meter_device.value = 0.0
+            self.current_value = 0.0
+            print("Мегомметр: принудительно установлено значение 0.00")
     
     def cleanup(self):
         """Очистка ресурсов."""
+        print("Мегомметр: начало очистки ресурсов")
+        
+        # Принудительно останавливаем все переходы
         self.transition_running = False
-        
         if self.transition_thread and self.transition_thread.is_alive():
-            self.transition_thread.join(timeout=1.0)
+            self.transition_thread.join(timeout=0.5)
         
+        # Гарантированно устанавливаем стрелку в ноль
         if self.meter_device:
             self.meter_device.value = 0.0
+            self.current_value = 0.0
+            print("Мегомметр: стрелка принудительно установлена в 0.00")
             self.meter_device.close()
             self.meter_device = None
             
@@ -191,12 +216,38 @@ class MockMegohmmeterController(MegohmmeterController):
     def key_pressed(self):
         """Обработчик нажатия на телеграфный ключ - стрелка на максимум."""
         print("Mock мегомметр: ключ нажат - стрелка на максимум")
-        self.set_value(1.0, smooth=False)
+        # Принудительно останавливаем все переходы
+        self.transition_running = False
+        if self.transition_thread and self.transition_thread.is_alive():
+            self.transition_thread.join(timeout=0.05)
+        
+        # Жестко устанавливаем максимальное значение
+        self.current_value = 1.0
+        print(f"Mock мегомметр: значение жестко установлено на 1.00")
     
     def key_released(self):
         """Обработчик отпускания телеграфного ключа - стрелка на ноль."""
         print("Mock мегомметр: ключ отпущен - стрелка на ноль")
-        self.set_value(0.0, smooth=False)
+        # Принудительно останавливаем все переходы
+        self.transition_running = False
+        if self.transition_thread and self.transition_thread.is_alive():
+            self.transition_thread.join(timeout=0.05)
+        
+        # Жестко устанавливаем нулевое значение
+        self.current_value = 0.0
+        print(f"Mock мегомметр: значение жестко установлено на 0.00")
+    
+    def force_reset(self):
+        """Принудительно сбросить стрелку в нулевое положение."""
+        print("Mock мегомметр: принудительный сброс стрелки в ноль")
+        # Останавливаем все переходы
+        self.transition_running = False
+        if self.transition_thread and self.transition_thread.is_alive():
+            self.transition_thread.join(timeout=0.05)
+        
+        # Принудительно устанавливаем ноль
+        self.current_value = 0.0
+        print("Mock мегомметр: принудительно установлено значение 0.00")
     
     def cleanup(self):
         """Mock очистка."""
