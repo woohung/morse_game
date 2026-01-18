@@ -30,7 +30,9 @@ class GameController:
     
     def _initialize_megohmmeter(self):
         """Initialize megohmmeter controller."""
-        from .config import MEGOHMMETER_PIN, MEGOHMMETER_PWM_FREQUENCY
+        from .config import (MEGOHMMETER_PIN, MEGOHMMETER_PWM_FREQUENCY, 
+                          MEGOHMMETER_BASELINE_FORCE, MEGOHMMETER_DOT_AMPLITUDE, 
+                          MEGOHMMETER_DASH_AMPLITUDE)
         
         try:
             # Try to initialize real megohmmeter
@@ -39,7 +41,15 @@ class GameController:
                 pwm_frequency=MEGOHMMETER_PWM_FREQUENCY
             )
             if megohmmeter.initialize():
+                # Set configuration parameters
+                megohmmeter.baseline_force = MEGOHMMETER_BASELINE_FORCE
+                megohmmeter.dot_amplitude = MEGOHMMETER_DOT_AMPLITUDE
+                megohmmeter.dash_amplitude = MEGOHMMETER_DASH_AMPLITUDE
+                
                 print(f"Мегомметр инициализирован на GPIO {MEGOHMMETER_PIN}")
+                print(f"  Базовый подпор: {MEGOHMMETER_BASELINE_FORCE}")
+                print(f"  Амплитуда точки: {MEGOHMMETER_DOT_AMPLITUDE}")
+                print(f"  Амплитуда тире: {MEGOHMMETER_DASH_AMPLITUDE}")
                 return megohmmeter
             else:
                 print("Не удалось инициализировать мегомметр, используем mock")
@@ -47,10 +57,20 @@ class GameController:
             print(f"Ошибка при инициализации мегомметра: {e}")
         
         # Fallback to mock
-        return MockMegohmmeterController(
+        mock_megohmmeter = MockMegohmmeterController(
             meter_pin=MEGOHMMETER_PIN,
             pwm_frequency=MEGOHMMETER_PWM_FREQUENCY
         )
+        mock_megohmmeter.baseline_force = MEGOHMMETER_BASELINE_FORCE
+        mock_megohmmeter.dot_amplitude = MEGOHMMETER_DOT_AMPLITUDE
+        mock_megohmmeter.dash_amplitude = MEGOHMMETER_DASH_AMPLITUDE
+        
+        print(f"Mock мегомметр с параметрами:")
+        print(f"  Базовый подпор: {MEGOHMMETER_BASELINE_FORCE}")
+        print(f"  Амплитуда точки: {MEGOHMMETER_DOT_AMPLITUDE}")
+        print(f"  Амплитуда тире: {MEGOHMMETER_DASH_AMPLITUDE}")
+        
+        return mock_megohmmeter
     
     def start_new_game(self):
         """Start a new game session."""
@@ -104,7 +124,7 @@ class GameController:
         if self.state_manager.current_state != GameState.PLAYING:
             return
         
-        # Return megohmmeter needle to zero when key is released
+        # Return megohmmeter needle to baseline when key is released
         if self.megohmmeter:
             self.megohmmeter.key_released()
             
@@ -114,14 +134,20 @@ class GameController:
         if press_duration < DEBOUNCE_TIME:
             return
 
-        # Determine dot or dash
+        # Determine dot or dash and apply appropriate amplitude
         threshold = (DOT_DURATION + DASH_DURATION) / 2
         if press_duration < threshold:
             self.current_sequence += "."
             print("Added: . (dot)")
+            # Apply dot amplitude to megohmmeter
+            if self.megohmmeter:
+                self.megohmmeter.apply_dot()
         else:
             self.current_sequence += "-"
             print("Added: - (dash)")
+            # Apply dash amplitude to megohmmeter
+            if self.megohmmeter:
+                self.megohmmeter.apply_dash()
 
         print(f"Current sequence: {self.current_sequence}")
 
@@ -235,13 +261,15 @@ class GameController:
                 self.end_game()
     
     def _ensure_needle_at_zero(self):
-        """Ensure needle is at zero when key should not be pressed."""
+        """Ensure needle is at baseline when key should not be pressed."""
         if self.megohmmeter and hasattr(self.megohmmeter, 'current_value'):
             # Only check if we have access to GPIO handler state
             if hasattr(self, '_last_gpio_state_check'):
                 if time.time() - self._last_gpio_state_check > 0.5:  # Check every 0.5 seconds
-                    if self.megohmmeter.current_value > 0.1:  # If needle is not at zero
-                        print("Мегомметр: обнаружено отклонение стрелки, принудительный сброс")
+                    baseline = self.megohmmeter.baseline_force
+                    tolerance = 0.02  # Допуск вокруг базового подпора
+                    if abs(self.megohmmeter.current_value - baseline) > tolerance:
+                        print(f"Мегомметр: обнаружено отклонение от базового подпора, принудительный сброс")
                         self.megohmmeter.force_reset()
                     self._last_gpio_state_check = time.time()
             else:
@@ -351,7 +379,7 @@ class GameController:
         if self.state_manager.current_state != GameState.PRACTICE:
             return
         
-        # Return megohmmeter needle to zero when key is released
+        # Return megohmmeter needle to baseline when key is released
         if self.megohmmeter:
             self.megohmmeter.key_released()
             
@@ -361,14 +389,20 @@ class GameController:
         if press_duration < DEBOUNCE_TIME:
             return
 
-        # Determine dot or dash
+        # Determine dot or dash and apply appropriate amplitude
         threshold = (DOT_DURATION + DASH_DURATION) / 2
         if press_duration < threshold:
             self.current_sequence += "."
             print("Practice: Added . (dot)")
+            # Apply dot amplitude to megohmmeter
+            if self.megohmmeter:
+                self.megohmmeter.apply_dot()
         else:
             self.current_sequence += "-"
             print("Practice: Added - (dash)")
+            # Apply dash amplitude to megohmmeter
+            if self.megohmmeter:
+                self.megohmmeter.apply_dash()
 
         print(f"Practice current sequence: {self.current_sequence}")
 

@@ -13,6 +13,11 @@ MEGOHMMETER_PIN = 13  # GPIO pin for megohmmeter needle control (PWM)
 MEGOHMMETER_PWM_FREQUENCY = 1000  # PWM frequency for smooth needle movement
 MEGOHMMETER_SMOOTH_TRANSITION = True  # Enable smooth needle transitions
 
+# Megohmmeter needle behavior
+MEGOHMMETER_BASELINE_FORCE = 0.08  # Baseline PWM value to create "pulling force" toward zero
+MEGOHMMETER_DOT_AMPLITUDE = 0.4    # Amplitude for dots (short deviation)
+MEGOHMMETER_DASH_AMPLITUDE = 0.9   # Amplitude for dashes (strong deviation)
+
 
 # Morse timing model
 DIT = 0.16
