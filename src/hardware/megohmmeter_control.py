@@ -97,6 +97,7 @@ class MegohmmeterController:
         if self.meter_device:
             self.meter_device.value = value
             self.current_value = value
+            print(f"Мегомметр: значение установлено на {value:.2f}")
     
     def _smooth_transition(self):
         """Плавный переход к целевому значению."""
@@ -133,11 +134,25 @@ class MegohmmeterController:
     
     def key_pressed(self):
         """Обработчик нажатия на телеграфный ключ - стрелка на максимум."""
-        self.set_value(1.0, smooth=True)
+        print("Мегомметр: ключ нажат - стрелка на максимум")
+        # Останавливаем предыдущий переход если он идет
+        self.transition_running = False
+        if self.transition_thread and self.transition_thread.is_alive():
+            self.transition_thread.join(timeout=0.1)
+        
+        # Устанавливаем стрелку на максимум немедленно
+        self.set_value(1.0, smooth=False)
     
     def key_released(self):
         """Обработчик отпускания телеграфного ключа - стрелка на ноль."""
-        self.set_value(0.0, smooth=True)
+        print("Мегомметр: ключ отпущен - стрелка на ноль")
+        # Останавливаем предыдущий переход если он идет
+        self.transition_running = False
+        if self.transition_thread and self.transition_thread.is_alive():
+            self.transition_thread.join(timeout=0.1)
+        
+        # Устанавливаем стрелку на ноль немедленно
+        self.set_value(0.0, smooth=False)
     
     def cleanup(self):
         """Очистка ресурсов."""
@@ -171,7 +186,17 @@ class MockMegohmmeterController(MegohmmeterController):
     def _set_immediate(self, value: float):
         """Mock установка значения."""
         self.current_value = value
-        print(f"Mock стрелка установлена на {value:.2f}")
+        print(f"Mock мегомметр: значение установлено на {value:.2f}")
+    
+    def key_pressed(self):
+        """Обработчик нажатия на телеграфный ключ - стрелка на максимум."""
+        print("Mock мегомметр: ключ нажат - стрелка на максимум")
+        self.set_value(1.0, smooth=False)
+    
+    def key_released(self):
+        """Обработчик отпускания телеграфного ключа - стрелка на ноль."""
+        print("Mock мегомметр: ключ отпущен - стрелка на ноль")
+        self.set_value(0.0, smooth=False)
     
     def cleanup(self):
         """Mock очистка."""
