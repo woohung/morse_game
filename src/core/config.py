@@ -121,7 +121,9 @@ def init_display():
     
     try:
         import pygame
-        pygame.display.init()
+        # Only initialize if not already initialized
+        if not pygame.display.get_init():
+            pygame.display.init()
         
         # Get the primary display info for reference
         SCREEN_INFO = pygame.display.Info()
@@ -171,6 +173,14 @@ def init_display():
     except Exception as e:
         print(f"Error initializing display: {e}")
         print("Using default display settings")
+        # Set default values if pygame is not available
+        SCREEN_INFO = None
+        FULLSCREEN_SCALE = 1.0
 
 # Initialize display settings when this module is imported
-init_display()
+# Note: This will be called again in the app if pygame is not ready
+try:
+    init_display()
+except Exception as e:
+    print(f"Failed to initialize display on import: {e}")
+    print("Will retry in application initialization")

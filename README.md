@@ -87,6 +87,8 @@ python main.py --low-fps          # Устанавливает 10 FPS
 - `--no-hw-accel` - отключить аппаратное ускорение
 - `--no-vsync` - отключить VSync
 - `--no-smooth-startup` - отключить плавный запуск (уменьшает задержку)
+- `--force-windowed` - принудительно оконный режим (если полноэкранный не работает)
+- `--disable-hw-fullscreen` - отключить аппаратное ускорение в полноэкранном режиме
 
 ## Оптимизация производительности для Raspberry Pi 4
 
@@ -134,6 +136,33 @@ python main.py --no-crt --no-neon
 
 # Если все еще тормозит
 python main.py --low-fps --no-crt --no-neon --no-hw-accel
+
+# Если полноэкранный режим не работает
+python main.py --force-windowed
+
+# Если полноэкранный режим не работает из-за аппаратного ускорения
+python main.py --disable-hw-fullscreen
+
+# Тест полноэкранного режима
+python test_fullscreen.py
+```
+
+## Диагностика проблем с дисплеем
+
+Если у вас проблемы с полноэкранным режимом, используйте тестовый скрипт:
+
+```bash
+# Тест всех режимов дисплея
+python test_display.py
+
+# Только полноэкранный режим
+python test_display.py --fullscreen
+
+# Только оконный режим
+python test_display.py --windowed
+
+# Специализированный тест полноэкранного режима
+python test_fullscreen.py
 ```
 
 ## Структура проекта

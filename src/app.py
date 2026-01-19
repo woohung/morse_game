@@ -14,6 +14,10 @@ from .core.config import (SCREEN_WIDTH, SCREEN_HEIGHT, init_display,
                           TARGET_FPS, ENABLE_CRT_EFFECT, ENABLE_NEON_EFFECTS,
                           FULLSCREEN_SCALE, USE_HARDWARE_ACCELERATION, ENABLE_VSYNC, 
                           USE_DOUBLE_BUFFERING, SMOOTH_STARTUP)
+
+# Global variable for fullscreen hardware acceleration control
+DISABLE_HW_FULLSCREEN = False
+
 from .ui.renderer import UIRenderer
 from .input.gpio_handler import GPIOHandler
 from .input.event_handler import EventHandler
@@ -22,7 +26,7 @@ from .input.event_handler import EventHandler
 def update_performance_settings(args):
     """Update performance settings based on command line arguments."""
     global TARGET_FPS, ENABLE_CRT_EFFECT, ENABLE_NEON_EFFECTS
-    global USE_HARDWARE_ACCELERATION, ENABLE_VSYNC, USE_DOUBLE_BUFFERING, SMOOTH_STARTUP
+    global USE_HARDWARE_ACCELERATION, ENABLE_VSYNC, USE_DOUBLE_BUFFERING, SMOOTH_STARTUP, DISABLE_HW_FULLSCREEN
     
     if "--low-fps" in args:
         TARGET_FPS = 10
@@ -56,6 +60,16 @@ def update_performance_settings(args):
     if "--no-smooth-startup" in args:
         SMOOTH_STARTUP = False
         print("Smooth startup disabled")
+    
+    if "--force-windowed" in args:
+        # Force windowed mode even if fullscreen requested
+        print("Force windowed mode enabled")
+    
+    if "--disable-hw-fullscreen" in args:
+        # Disable hardware acceleration in fullscreen mode
+        global DISABLE_HW_FULLSCREEN
+        DISABLE_HW_FULLSCREEN = True
+        print("Hardware acceleration disabled for fullscreen mode")
 
 
 class MorseApp:
@@ -67,9 +81,20 @@ class MorseApp:
         pygame.display.init()
         pygame.font.init()
         
+        # Check if windowed mode is forced
+        if "--force-windowed" in sys.argv:
+            fullscreen = False
+            print("Windowed mode forced by command line argument")
+        
         self.fullscreen = fullscreen
         self.input_mode = input_mode
         self.running = True
+        
+        # Re-initialize display settings now that pygame is ready
+        from .core.config import init_display, SCREEN_INFO
+        if SCREEN_INFO is None:
+            print("Re-initializing display settings with pygame ready")
+            init_display()
         
         # Initialize display first
         self._setup_display()
@@ -107,34 +132,66 @@ class MorseApp:
         """Set up the display based on configuration with proper scaling and smooth initialization."""
         from .core.config import SCREEN_INFO, FULLSCREEN_SCALE
         
-        # Set up display flags for performance
-        flags = 0
-        if USE_HARDWARE_ACCELERATION:
-            flags |= pygame.HWSURFACE
-        if USE_DOUBLE_BUFFERING:
-            flags |= pygame.DOUBLEBUF
+        print(f"Setting up display - Fullscreen: {self.fullscreen}")
+        print(f"Target resolution: {SCREEN_WIDTH}x{SCREEN_HEIGHT}")
         
         # Initialize display once to avoid flickering
         if self.fullscreen:
-            # For fullscreen, use actual display resolution but scale our content
-            actual_width = SCREEN_INFO.current_w if SCREEN_INFO else SCREEN_WIDTH
-            actual_height = SCREEN_INFO.current_h if SCREEN_INFO else SCREEN_HEIGHT
-            
-            if FULLSCREEN_SCALE > 1.0:
-                # High-res display: use native resolution for scaling
-                self.screen = pygame.display.set_mode((actual_width, actual_height), pygame.FULLSCREEN | flags)
-                self.render_surface = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
-                print(f"Fullscreen mode: {actual_width}x{actual_height} with {SCREEN_WIDTH}x{SCREEN_HEIGHT} render surface")
-            else:
-                # Standard resolution: use our target resolution directly
-                self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.FULLSCREEN | flags)
+            # Try fullscreen with minimal flags first for maximum compatibility
+            try:
+                self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.FULLSCREEN)
                 self.render_surface = None
-                print(f"Fullscreen mode: {SCREEN_WIDTH}x{SCREEN_HEIGHT}")
+                print(f"Fullscreen mode (basic): {SCREEN_WIDTH}x{SCREEN_HEIGHT}")
+            except Exception as e:
+                print(f"Error with basic fullscreen: {e}")
+                
+                # Only try hardware flags if not disabled
+                if not DISABLE_HW_FULLSCREEN:
+                    # Try with performance flags
+                    try:
+                        flags = 0
+                        if USE_HARDWARE_ACCELERATION:
+                            flags |= pygame.HWSURFACE
+                        if USE_DOUBLE_BUFFERING:
+                            flags |= pygame.DOUBLEBUF
+                        
+                        self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.FULLSCREEN | flags)
+                        self.render_surface = None
+                        print(f"Fullscreen mode (with flags): {SCREEN_WIDTH}x{SCREEN_HEIGHT}")
+                    except Exception as e2:
+                        print(f"Error with fullscreen flags: {e2}")
+                        # Fallback to windowed mode
+                        try:
+                            self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+                            self.render_surface = None
+                            print("Fallback to windowed mode due to fullscreen errors")
+                        except Exception as e3:
+                            print(f"Error with windowed fallback: {e3}")
+                            raise
+                else:
+                    # Hardware acceleration disabled, fallback to windowed
+                    try:
+                        self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+                        self.render_surface = None
+                        print("Hardware acceleration disabled - fallback to windowed mode")
+                    except Exception as e2:
+                        print(f"Error with windowed fallback: {e2}")
+                        raise
         else:
             # Windowed mode: always use our target resolution
-            self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), flags)
-            self.render_surface = None
-            print(f"Windowed mode: {SCREEN_WIDTH}x{SCREEN_HEIGHT}")
+            try:
+                self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+                self.render_surface = None
+                print(f"Windowed mode: {SCREEN_WIDTH}x{SCREEN_HEIGHT}")
+            except Exception as e:
+                print(f"Error setting windowed mode: {e}")
+                raise
+        
+        # Verify display was created successfully
+        if not self.screen:
+            raise RuntimeError("Failed to create pygame display")
+        
+        print(f"Display created successfully: {self.screen.get_size()}")
         
         # Set caption and hide mouse once
         pygame.display.set_caption("Morse Code Game")
@@ -278,9 +335,6 @@ def main():
     
     # Update performance settings based on arguments
     update_performance_settings(sys.argv)
-    
-    # Initialize display settings
-    init_display()
     
     try:
         app = MorseApp(fullscreen=fullscreen, input_mode=input_mode)
