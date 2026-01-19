@@ -58,7 +58,7 @@ DIFFICULTY_SETTINGS = {
 # Display settings - optimized for Raspberry Pi 4 performance
 # These will be updated at runtime to match the display
 SCREEN_INFO = None  # Will store display info
-SCREEN_WIDTH = 1280  # Optimized resolution for RPi 4
+SCREEN_WIDTH = 1024  # Optimized resolution for RPi 4
 SCREEN_HEIGHT = 728   # Optimized resolution for RPi 4
 FONT_SIZE = 48  # Base font size, will be scaled
 
