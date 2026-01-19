@@ -59,14 +59,22 @@ DIFFICULTY_SETTINGS = {
 # These will be updated at runtime to match the display
 SCREEN_INFO = None  # Will store display info
 SCREEN_WIDTH = 1024  # Optimized resolution for RPi 4
-SCREEN_HEIGHT = 728   # Optimized resolution for RPi 4
+SCREEN_HEIGHT = 768   # Optimized resolution for RPi 4 (corrected from 728)
 FONT_SIZE = 48  # Base font size, will be scaled
+
+# Scaling for fullscreen mode on high-res displays
+FULLSCREEN_SCALE = 1.0  # Will be calculated based on actual display resolution
+USE_HARDWARE_ACCELERATION = True  # Enable hardware acceleration on RPi
 
 # Performance settings for Raspberry Pi 4
 TARGET_FPS = 20  # Reduced from 30 for better performance on RPi 4
 ENABLE_CRT_EFFECT = True  # Can be disabled for performance
 ENABLE_NEON_EFFECTS = True  # Can be disabled for performance
 ENABLE_PARTICLE_EFFECTS = False  # Disabled by default for performance
+
+# Additional performance optimizations
+ENABLE_VSYNC = True  # Enable VSync for smoother rendering
+USE_DOUBLE_BUFFERING = True  # Enable double buffering
 
 # Typography settings
 LETTER_SPACING_MULTIPLIER = 0.6  # Spacing between letters as fraction of font size (increased)
@@ -107,7 +115,8 @@ os.makedirs(os.path.dirname(RESULTS_FILE), exist_ok=True)
 def init_display():
     """Initialize display settings based on actual display resolution."""
     global SCREEN_WIDTH, SCREEN_HEIGHT, FONT_SIZE, SCREEN_INFO
-    global TARGET_FPS, ENABLE_CRT_EFFECT, ENABLE_NEON_EFFECTS
+    global TARGET_FPS, ENABLE_CRT_EFFECT, ENABLE_NEON_EFFECTS, FULLSCREEN_SCALE
+    global USE_HARDWARE_ACCELERATION, ENABLE_VSYNC, USE_DOUBLE_BUFFERING
     
     try:
         import pygame
@@ -116,9 +125,20 @@ def init_display():
         # Get the primary display info for reference
         SCREEN_INFO = pygame.display.Info()
         
-        # Use optimized resolution for RPi 4 instead of auto-detection
-        # This ensures consistent performance across different displays
-        print(f"Using optimized resolution: {SCREEN_WIDTH}x{SCREEN_HEIGHT}")
+        # Calculate scaling factor for fullscreen mode
+        if SCREEN_INFO.current_w > SCREEN_WIDTH or SCREEN_INFO.current_h > SCREEN_HEIGHT:
+            # Display is higher resolution than our target
+            FULLSCREEN_SCALE = min(
+                SCREEN_INFO.current_w / SCREEN_WIDTH,
+                SCREEN_INFO.current_h / SCREEN_HEIGHT
+            )
+            print(f"High-res display detected: {SCREEN_INFO.current_w}x{SCREEN_INFO.current_h}")
+            print(f"Using scaling factor: {FULLSCREEN_SCALE:.2f}")
+        else:
+            FULLSCREEN_SCALE = 1.0
+            print(f"Display resolution: {SCREEN_INFO.current_w}x{SCREEN_INFO.current_h}")
+        
+        print(f"Target resolution: {SCREEN_WIDTH}x{SCREEN_HEIGHT}")
         
         # Scale font size based on our optimized resolution
         FONT_SIZE = max(24, int(min(SCREEN_WIDTH, SCREEN_HEIGHT) * 0.04))  # Slightly larger font for 720p
@@ -137,11 +157,15 @@ def init_display():
                     TARGET_FPS = 15  # Even lower FPS for RPi
                     ENABLE_CRT_EFFECT = False  # Disable CRT by default on RPi
                     ENABLE_NEON_EFFECTS = False  # Disable neon by default on RPi
+                    USE_HARDWARE_ACCELERATION = True  # Enable RPi GPU acceleration
+                    ENABLE_VSYNC = True  # Enable VSync for smoother rendering
+                    USE_DOUBLE_BUFFERING = True  # Enable double buffering
         except:
             pass  # Not on RPi or can't detect
         
         print(f"Display initialized: {SCREEN_WIDTH}x{SCREEN_HEIGHT}, Font size: {FONT_SIZE}")
         print(f"Performance settings: FPS={TARGET_FPS}, CRT={ENABLE_CRT_EFFECT}, Neon={ENABLE_NEON_EFFECTS}")
+        print(f"Hardware acceleration: {USE_HARDWARE_ACCELERATION}, VSync: {ENABLE_VSYNC}")
         
     except Exception as e:
         print(f"Error initializing display: {e}")

@@ -11,7 +11,8 @@ from typing import Optional
 from .core.game_state import GameStateManager
 from .core.game_controller import GameController
 from .core.config import (SCREEN_WIDTH, SCREEN_HEIGHT, init_display, 
-                          TARGET_FPS, ENABLE_CRT_EFFECT, ENABLE_NEON_EFFECTS)
+                          TARGET_FPS, ENABLE_CRT_EFFECT, ENABLE_NEON_EFFECTS,
+                          FULLSCREEN_SCALE, USE_HARDWARE_ACCELERATION, ENABLE_VSYNC, USE_DOUBLE_BUFFERING)
 from .ui.renderer import UIRenderer
 from .input.gpio_handler import GPIOHandler
 from .input.event_handler import EventHandler
@@ -20,6 +21,7 @@ from .input.event_handler import EventHandler
 def update_performance_settings(args):
     """Update performance settings based on command line arguments."""
     global TARGET_FPS, ENABLE_CRT_EFFECT, ENABLE_NEON_EFFECTS
+    global USE_HARDWARE_ACCELERATION, ENABLE_VSYNC, USE_DOUBLE_BUFFERING
     
     if "--low-fps" in args:
         TARGET_FPS = 10
@@ -37,7 +39,18 @@ def update_performance_settings(args):
         TARGET_FPS = 15
         ENABLE_CRT_EFFECT = False
         ENABLE_NEON_EFFECTS = False
+        USE_HARDWARE_ACCELERATION = True
+        ENABLE_VSYNC = True
+        USE_DOUBLE_BUFFERING = True
         print("High performance mode enabled")
+    
+    if "--no-hw-accel" in args:
+        USE_HARDWARE_ACCELERATION = False
+        print("Hardware acceleration disabled")
+    
+    if "--no-vsync" in args:
+        ENABLE_VSYNC = False
+        print("VSync disabled")
 
 
 class MorseApp:
@@ -56,6 +69,10 @@ class MorseApp:
         self.state_manager = GameStateManager()
         self.game_controller = GameController(self.state_manager)
         self.ui_renderer = UIRenderer(self.screen)
+        
+        # Set render surface if using scaling
+        if hasattr(self, 'render_surface') and self.render_surface:
+            self.ui_renderer.set_render_surface(self.render_surface)
         
         # Initialize GPIO handler
         self.gpio_handler = GPIOHandler(
@@ -78,14 +95,47 @@ class MorseApp:
         self.target_fps = TARGET_FPS
     
     def _setup_display(self):
-        """Set up the display based on configuration."""
+        """Set up the display based on configuration with proper scaling."""
+        from .core.config import SCREEN_INFO, FULLSCREEN_SCALE
+        
+        # Set up display flags for performance
+        flags = 0
+        if USE_HARDWARE_ACCELERATION:
+            flags |= pygame.HWSURFACE
+        if USE_DOUBLE_BUFFERING:
+            flags |= pygame.DOUBLEBUF
+        
         if self.fullscreen:
-            self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.FULLSCREEN)
+            # For fullscreen, use actual display resolution but scale our content
+            actual_width = SCREEN_INFO.current_w if SCREEN_INFO else SCREEN_WIDTH
+            actual_height = SCREEN_INFO.current_h if SCREEN_INFO else SCREEN_HEIGHT
+            
+            if FULLSCREEN_SCALE > 1.0:
+                # High-res display: use native resolution for scaling
+                self.screen = pygame.display.set_mode((actual_width, actual_height), pygame.FULLSCREEN | flags)
+                self.render_surface = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
+                print(f"Fullscreen mode: {actual_width}x{actual_height} with {SCREEN_WIDTH}x{SCREEN_HEIGHT} render surface")
+            else:
+                # Standard resolution: use our target resolution directly
+                self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.FULLSCREEN | flags)
+                self.render_surface = None
+                print(f"Fullscreen mode: {SCREEN_WIDTH}x{SCREEN_HEIGHT}")
         else:
-            self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+            # Windowed mode: always use our target resolution
+            self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), flags)
+            self.render_surface = None
+            print(f"Windowed mode: {SCREEN_WIDTH}x{SCREEN_HEIGHT}")
         
         pygame.display.set_caption("Morse Code Game")
         pygame.mouse.set_visible(False)
+        
+        # Set VSync if enabled
+        if ENABLE_VSYNC:
+            try:
+                # Try to enable VSync (may not be available on all systems)
+                pygame.display.set_mode(self.screen.get_size(), self.screen.get_flags() | pygame.HWSURFACE | pygame.DOUBLEBUF)
+            except:
+                pass  # VSync not available, continue without it
     
     def _on_gpio_press(self):
         """Handle GPIO key press - route to appropriate controller based on game state."""
@@ -120,13 +170,13 @@ class MorseApp:
     def toggle_fullscreen(self):
         """Toggle between fullscreen and windowed mode."""
         self.fullscreen = not self.fullscreen
-        if self.fullscreen:
-            self.screen = pygame.display.set_mode(
-                (SCREEN_WIDTH, SCREEN_HEIGHT), 
-                pygame.FULLSCREEN
-            )
+        self._setup_display()  # Re-setup display with new mode
+        
+        # Update renderer with new render surface if needed
+        if hasattr(self, 'render_surface') and self.render_surface:
+            self.ui_renderer.set_render_surface(self.render_surface)
         else:
-            self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+            self.ui_renderer.set_render_surface(None)
     
     def run(self):
         """Main application loop."""
@@ -149,6 +199,15 @@ class MorseApp:
                 
                 # Update display
                 self.ui_renderer.render(self.state_manager, self.game_controller.current_sequence)
+                
+                # Handle scaling for high-res displays
+                if hasattr(self, 'render_surface') and self.render_surface:
+                    # Scale our render surface to fit the actual screen
+                    scaled_surface = pygame.transform.scale(self.render_surface, 
+                                                          (self.screen.get_width(), self.screen.get_height()))
+                    self.screen.blit(scaled_surface, (0, 0))
+                
+                pygame.display.flip()
                 
                 # Control frame rate
                 self.clock.tick(self.target_fps)

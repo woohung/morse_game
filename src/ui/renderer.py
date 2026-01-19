@@ -17,6 +17,7 @@ class UIRenderer:
     
     def __init__(self, screen: pygame.Surface):
         self.screen = screen
+        self.render_surface = None  # Will be set if using scaling
         self._setup_fonts()
     
     def _setup_fonts(self):
@@ -159,10 +160,22 @@ class UIRenderer:
         if center_y:
             y = y - neon_surface.get_height() // 2
             
-        self.screen.blit(neon_surface, (x, y))
+        self._blit_to_target(neon_surface, (x, y))
+    
+    def set_render_surface(self, render_surface: pygame.Surface):
+        """Set the render surface for scaling mode."""
+        self.render_surface = render_surface
+    
+    def _get_target_surface(self):
+        """Get the target surface for rendering (screen or render_surface)."""
+        return self.render_surface if self.render_surface else self.screen
+    
+    def _blit_to_target(self, surface, position):
+        """Blit surface to the target surface."""
+        target = self._get_target_surface()
+        target.blit(surface, position)
     
     def _get_neon_color_for_state(self, color_state: str) -> tuple:
-        """Get neon color based on letter state."""
         if color_state == 'green':
             return COLORS['correct']
         elif color_state == 'red':
@@ -177,8 +190,11 @@ class UIRenderer:
         # Update cursor blinking
         state_manager.update_cursor(current_time)
         
+        # Get target surface for rendering
+        target_surface = self._get_target_surface()
+        
         # Clear screen
-        self.screen.fill(COLORS['background'])
+        target_surface.fill(COLORS['background'])
         
         # Render based on current state
         if state_manager.current_state == GameState.MAIN_MENU:
