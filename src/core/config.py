@@ -9,12 +9,13 @@ GPIO_PIN = 17  # Default GPIO pin for the telegraph key (BCM numbering)
 PULL_UP_DOWN = 'pull_up'  # 'pull_up' or 'pull_down' depending on wiring
 
 # Megohmmeter configuration
-MEGOHMMETER_PIN = 13  # GPIO pin for megohmmeter needle control (PWM)
+MEGOHMMETER_PIN = 13  # GPIO pin for megohmmeter needle control (PWM) - основная катушка
+MEGOHMMETER_PULLBACK_PIN = 12  # GPIO pin for pullback coil (PWM) - оттягивающая катушка
 MEGOHMMETER_PWM_FREQUENCY = 1000  # PWM frequency for smooth needle movement
 MEGOHMMETER_SMOOTH_TRANSITION = True  # Enable smooth needle transitions
 
 # Megohmmeter needle behavior
-MEGOHMMETER_BASELINE_FORCE = 0.05  # Small positive value to create weak "pulling force" (minimal deviation)
+MEGOHMMETER_BASELINE_FORCE = 0.1  # Pullback coil strength when key is released
 MEGOHMMETER_DOT_AMPLITUDE = 0.4    # Amplitude for dots (short deviation)
 MEGOHMMETER_DASH_AMPLITUDE = 0.9   # Amplitude for dashes (strong deviation)
 

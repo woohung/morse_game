@@ -30,7 +30,7 @@ class GameController:
     
     def _initialize_megohmmeter(self):
         """Initialize megohmmeter controller."""
-        from .config import (MEGOHMMETER_PIN, MEGOHMMETER_PWM_FREQUENCY, 
+        from .config import (MEGOHMMETER_PIN, MEGOHMMETER_PULLBACK_PIN, MEGOHMMETER_PWM_FREQUENCY, 
                           MEGOHMMETER_BASELINE_FORCE, MEGOHMMETER_DOT_AMPLITUDE, 
                           MEGOHMMETER_DASH_AMPLITUDE)
         
@@ -38,6 +38,7 @@ class GameController:
             # Try to initialize real megohmmeter
             megohmmeter = MegohmmeterController(
                 meter_pin=MEGOHMMETER_PIN,
+                pullback_pin=MEGOHMMETER_PULLBACK_PIN,
                 pwm_frequency=MEGOHMMETER_PWM_FREQUENCY
             )
             if megohmmeter.initialize():
@@ -46,8 +47,10 @@ class GameController:
                 megohmmeter.dot_amplitude = MEGOHMMETER_DOT_AMPLITUDE
                 megohmmeter.dash_amplitude = MEGOHMMETER_DASH_AMPLITUDE
                 
-                print(f"Мегомметр инициализирован на GPIO {MEGOHMMETER_PIN}")
-                print(f"  Базовый подпор: {MEGOHMMETER_BASELINE_FORCE}")
+                print(f"Мегомметр инициализирован:")
+                print(f"  Основная катушка: GPIO {MEGOHMMETER_PIN}")
+                print(f"  Оттягивающая катушка: GPIO {MEGOHMMETER_PULLBACK_PIN}")
+                print(f"  Сила оттягивания: {MEGOHMMETER_BASELINE_FORCE}")
                 print(f"  Амплитуда точки: {MEGOHMMETER_DOT_AMPLITUDE}")
                 print(f"  Амплитуда тире: {MEGOHMMETER_DASH_AMPLITUDE}")
                 return megohmmeter
@@ -59,6 +62,7 @@ class GameController:
         # Fallback to mock
         mock_megohmmeter = MockMegohmmeterController(
             meter_pin=MEGOHMMETER_PIN,
+            pullback_pin=MEGOHMMETER_PULLBACK_PIN,
             pwm_frequency=MEGOHMMETER_PWM_FREQUENCY
         )
         mock_megohmmeter.baseline_force = MEGOHMMETER_BASELINE_FORCE
@@ -66,7 +70,9 @@ class GameController:
         mock_megohmmeter.dash_amplitude = MEGOHMMETER_DASH_AMPLITUDE
         
         print(f"Mock мегомметр с параметрами:")
-        print(f"  Базовый подпор: {MEGOHMMETER_BASELINE_FORCE}")
+        print(f"  Основная катушка: GPIO {MEGOHMMETER_PIN}")
+        print(f"  Оттягивающая катушка: GPIO {MEGOHMMETER_PULLBACK_PIN}")
+        print(f"  Сила оттягивания: {MEGOHMMETER_BASELINE_FORCE}")
         print(f"  Амплитуда точки: {MEGOHMMETER_DOT_AMPLITUDE}")
         print(f"  Амплитуда тире: {MEGOHMMETER_DASH_AMPLITUDE}")
         

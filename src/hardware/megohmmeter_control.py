@@ -20,65 +20,91 @@ class MegohmmeterController:
     
     def __init__(self, 
                  meter_pin: int = 13, 
+                 pullback_pin: int = 12,
                  pwm_frequency: int = 1000,
                  initial_value: float = 0.0):
         """
-        Инициализация контроллера мегомметра.
+        Инициализация контроллера мегомметра с двумя катушками.
         
         Args:
-            meter_pin: GPIO пин для управления стрелкой (PWM)
+            meter_pin: GPIO пин для основной катушки (PWM)
+            pullback_pin: GPIO пин для оттягивающей катушки (PWM)
             pwm_frequency: Частота PWM для плавного движения стрелки
             initial_value: Начальное значение PWM (0.0 = минимум, 1.0 = максимум)
         """
         self.meter_pin = meter_pin
+        self.pullback_pin = pullback_pin
         self.pwm_frequency = pwm_frequency
-        self.current_value = initial_value
-        
-        # Параметры "оттягивающей силы" и амплитуд
-        self.baseline_force = 0.08  # Базовый подпор для возврата стрелки к нулю
-        self.dot_amplitude = 0.4    # Амплитуда для точки (короткое отклонение)
-        self.dash_amplitude = 0.9   # Амплитуда для тире (сильное отклонение)
-        
-        # Инициализация компонентов
-        self.meter_device = None
+        self.meter_device = None  # Основная катушка
+        self.pullback_device = None  # Оттягивающая катушка
         self.is_initialized = False
-        
-        # Поток для плавных переходов
-        self.transition_thread = None
-        self.transition_running = False
-        self.target_value = initial_value
-        
-        # Состояние ключа для отслеживания
         self.is_key_pressed = False
         
-    def initialize(self) -> bool:
-        """
-        Инициализация GPIO компонентов.
+        # Параметры управления
+        self.baseline_force = 0.1  # Сила оттягивающей катушки
+        self.dot_amplitude = 0.4    # Амплитуда для точек
+        self.dash_amplitude = 0.9   # Амплитуда для тире
         
-        Returns:
-            bool: True если инициализация прошла успешно, иначе False
-        """
+        # Плавные переходы
+        self.transition_running = False
+        self.transition_thread = None
+        self.current_value = 0.0
+        
+        print(f"Мегомметр: инициализация с основной катушкой GPIO {meter_pin} и оттягивающей GPIO {pullback_pin}")
+    
+    def initialize(self):
+        """Инициализация PWM устройств."""
         try:
-            if PWMOutputDevice is None:
-                print("PWMOutputDevice не доступен, используем mock режим")
-                self.is_initialized = False
-                return False
-                
-            # Создаем PWM устройство для управления стрелкой
+            from gpiozero import PWMOutputDevice
+            
+            # Инициализируем основную катушку
             self.meter_device = PWMOutputDevice(
                 pin=self.meter_pin,
                 frequency=self.pwm_frequency,
-                initial_value=self.current_value
+                initial_value=0.0
             )
             
+            # Инициализируем оттягивающую катушку
+            self.pullback_device = PWMOutputDevice(
+                pin=self.pullback_pin,
+                frequency=self.pwm_frequency,
+                initial_value=0.0
+            )
+            
+            print(f"Мегомметр: основная катушка инициализирована на GPIO {self.meter_pin}")
+            print(f"Мегомметр: оттягивающая катушка инициализирована на GPIO {self.pullback_pin}")
+            
+            # Устанавливаем начальное состояние
+            self._set_pullback_force()
+            
             self.is_initialized = True
-            print(f"Мегомметр инициализирован на GPIO {self.meter_pin}")
             return True
             
+        except ImportError:
+            print("gpiozero не найден, используем mock режим")
+            return False
         except Exception as e:
             print(f"Ошибка инициализации мегомметра: {e}")
-            self.is_initialized = False
             return False
+    
+    def _set_pullback_force(self):
+        """Установить силу оттягивающей катушки."""
+        if self.pullback_device:
+            self.pullback_device.value = self.baseline_force
+            print(f"Мегомметр: оттягивающая катушка установлена на {self.baseline_force:.2f}")
+    
+    def _disable_pullback_force(self):
+        """Отключить оттягивающую катушку."""
+        if self.pullback_device:
+            self.pullback_device.value = 0.0
+            print("Мегомметр: оттягивающая катушка отключена")
+    
+    def _set_meter_value(self, value: float):
+        """Установить значение на основной катушке."""
+        if self.meter_device:
+            self.meter_device.value = value
+            self.current_value = value
+            print(f"Мегомметр: основная катушка установлена на {value:.2f}")
     
     def set_value(self, value: float, smooth: bool = True):
         """
@@ -149,12 +175,13 @@ class MegohmmeterController:
         if self.transition_thread and self.transition_thread.is_alive():
             self.transition_thread.join(timeout=0.05)
         
-        # Устанавливаем начальное отклонение (амплитуда точки)
+        # Отключаем оттягивающую катушку при нажатии
+        self._disable_pullback_force()
+        
+        # Устанавливаем начальное отклонение на основной катушке (амплитуда точки)
         initial_value = self.dot_amplitude
-        if self.meter_device:
-            self.meter_device.value = initial_value
-            self.current_value = initial_value
-            print(f"Мегомметр: начальное отклонение установлено на {initial_value:.2f}")
+        self._set_meter_value(initial_value)
+        print(f"Мегомметр: начальное отклонение установлено на {initial_value:.2f}")
     
     def key_released(self):
         """Обработчик отпускания телеграфного ключа - возврат к базовому подпору."""
@@ -165,11 +192,12 @@ class MegohmmeterController:
         if self.transition_thread and self.transition_thread.is_alive():
             self.transition_thread.join(timeout=0.05)
         
-        # Возвращаем к базовому подпору (минимальное отклонение)
-        if self.meter_device:
-            self.meter_device.value = self.baseline_force
-            self.current_value = self.baseline_force
-            print(f"Мегомметр: базовый подпор установлен на {self.baseline_force:.2f} (минимальное отклонение)")
+        # Отключаем основную катушку
+        self._set_meter_value(0.0)
+        
+        # Включаем оттягивающую катушку
+        self._set_pullback_force()
+        print(f"Мегомметр: оттягивающая катушка включена для возврата стрелки")
     
     def apply_dot(self):
         """Применить амплитуду точки (короткое отклонение)."""
@@ -238,11 +266,12 @@ class MegohmmeterController:
         if self.transition_thread and self.transition_thread.is_alive():
             self.transition_thread.join(timeout=0.05)
         
-        # Принудительно устанавливаем базовый подпор (минимальное отклонение)
-        if self.meter_device:
-            self.meter_device.value = self.baseline_force
-            self.current_value = self.baseline_force
-            print(f"Мегомметр: принудительно установлен базовый подпор {self.baseline_force:.2f} (минимальное отклонение)")
+        # Отключаем основную катушку
+        self._set_meter_value(0.0)
+        
+        # Включаем оттягивающую катушку
+        self._set_pullback_force()
+        print(f"Мегомметр: принудительно включена оттягивающая катушка для возврата стрелки")
     
     def cleanup(self):
         """Очистка ресурсов."""
@@ -253,13 +282,19 @@ class MegohmmeterController:
         if self.transition_thread and self.transition_thread.is_alive():
             self.transition_thread.join(timeout=0.5)
         
-        # Гарантированно устанавливаем базовый подпор перед закрытием
+        # Отключаем обе катушки перед закрытием
+        self._set_meter_value(0.0)
+        if self.pullback_device:
+            self.pullback_device.value = 0.0
+            print("Мегомметр: оттягивающая катушка отключена")
+        
+        # Закрываем устройства
         if self.meter_device:
-            self.meter_device.value = self.baseline_force
-            self.current_value = self.baseline_force
-            print(f"Мегомметр: базовый подпор установлен перед закрытием {self.baseline_force:.2f} (минимальное отклонение)")
             self.meter_device.close()
             self.meter_device = None
+        if self.pullback_device:
+            self.pullback_device.close()
+            self.pullback_device = None
             
         self.is_initialized = False
         print("Ресурсы мегомметра освобождены")
