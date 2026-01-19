@@ -78,6 +78,11 @@ class GameController:
         
         return mock_megohmmeter
     
+    def cleanup(self):
+        """Clean up megohmmeter resources when exiting application."""
+        if self.megohmmeter:
+            self.megohmmeter.cleanup()
+    
     def start_new_game(self):
         """Start a new game session."""
         print(f"Starting new game for player: {self.state_manager.game_data.nickname}")
@@ -321,9 +326,9 @@ class GameController:
     
     def end_game(self):
         """End the current game session."""
-        # Clean up megohmmeter resources
+        # Reset megohmmeter needle instead of cleaning up resources
         if self.megohmmeter:
-            self.megohmmeter.cleanup()
+            self.megohmmeter.force_reset()
             
         # Calculate final score
         self.state_manager.game_data.score = self.state_manager.game_data.words_completed

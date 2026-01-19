@@ -292,6 +292,7 @@ class MorseApp:
     def cleanup(self):
         """Clean up resources."""
         self.gpio_handler.stop()
+        self.game_controller.cleanup()  # Clean up megohmmeter resources
         pygame.quit()
 
 
