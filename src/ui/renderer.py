@@ -216,10 +216,8 @@ class UIRenderer:
         
         # Apply CRT effect for retro monitor feel (if enabled)
         if ENABLE_CRT_EFFECT:
-            crt_surface = self._create_crt_effect(self.screen)
-            self.screen.blit(crt_surface, (0, 0))
-        
-        pygame.display.flip()
+            crt_surface = self._create_crt_effect(target_surface)
+            target_surface.blit(crt_surface, (0, 0))
     
     def _draw_practice_screen(self, state_manager: GameStateManager, morse_sequence: str, current_time: float):
         """Draw practice mode screen with single letter training and Morse alphabet reference."""

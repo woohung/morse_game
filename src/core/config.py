@@ -75,6 +75,7 @@ ENABLE_PARTICLE_EFFECTS = False  # Disabled by default for performance
 # Additional performance optimizations
 ENABLE_VSYNC = True  # Enable VSync for smoother rendering
 USE_DOUBLE_BUFFERING = True  # Enable double buffering
+SMOOTH_STARTUP = True  # Enable smooth startup to reduce flickering
 
 # Typography settings
 LETTER_SPACING_MULTIPLIER = 0.6  # Spacing between letters as fraction of font size (increased)

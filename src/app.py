@@ -12,7 +12,8 @@ from .core.game_state import GameStateManager
 from .core.game_controller import GameController
 from .core.config import (SCREEN_WIDTH, SCREEN_HEIGHT, init_display, 
                           TARGET_FPS, ENABLE_CRT_EFFECT, ENABLE_NEON_EFFECTS,
-                          FULLSCREEN_SCALE, USE_HARDWARE_ACCELERATION, ENABLE_VSYNC, USE_DOUBLE_BUFFERING)
+                          FULLSCREEN_SCALE, USE_HARDWARE_ACCELERATION, ENABLE_VSYNC, 
+                          USE_DOUBLE_BUFFERING, SMOOTH_STARTUP)
 from .ui.renderer import UIRenderer
 from .input.gpio_handler import GPIOHandler
 from .input.event_handler import EventHandler
@@ -21,7 +22,7 @@ from .input.event_handler import EventHandler
 def update_performance_settings(args):
     """Update performance settings based on command line arguments."""
     global TARGET_FPS, ENABLE_CRT_EFFECT, ENABLE_NEON_EFFECTS
-    global USE_HARDWARE_ACCELERATION, ENABLE_VSYNC, USE_DOUBLE_BUFFERING
+    global USE_HARDWARE_ACCELERATION, ENABLE_VSYNC, USE_DOUBLE_BUFFERING, SMOOTH_STARTUP
     
     if "--low-fps" in args:
         TARGET_FPS = 10
@@ -51,18 +52,26 @@ def update_performance_settings(args):
     if "--no-vsync" in args:
         ENABLE_VSYNC = False
         print("VSync disabled")
+    
+    if "--no-smooth-startup" in args:
+        SMOOTH_STARTUP = False
+        print("Smooth startup disabled")
 
 
 class MorseApp:
     """Main application class with proper separation of concerns."""
     
     def __init__(self, fullscreen=True, input_mode='auto'):
+        # Initialize pygame with minimal settings first to avoid flickering
         pygame.init()
+        pygame.display.init()
+        pygame.font.init()
+        
         self.fullscreen = fullscreen
         self.input_mode = input_mode
         self.running = True
         
-        # Initialize display
+        # Initialize display first
         self._setup_display()
         
         # Initialize components
@@ -95,7 +104,7 @@ class MorseApp:
         self.target_fps = TARGET_FPS
     
     def _setup_display(self):
-        """Set up the display based on configuration with proper scaling."""
+        """Set up the display based on configuration with proper scaling and smooth initialization."""
         from .core.config import SCREEN_INFO, FULLSCREEN_SCALE
         
         # Set up display flags for performance
@@ -105,6 +114,7 @@ class MorseApp:
         if USE_DOUBLE_BUFFERING:
             flags |= pygame.DOUBLEBUF
         
+        # Initialize display once to avoid flickering
         if self.fullscreen:
             # For fullscreen, use actual display resolution but scale our content
             actual_width = SCREEN_INFO.current_w if SCREEN_INFO else SCREEN_WIDTH
@@ -126,16 +136,17 @@ class MorseApp:
             self.render_surface = None
             print(f"Windowed mode: {SCREEN_WIDTH}x{SCREEN_HEIGHT}")
         
+        # Set caption and hide mouse once
         pygame.display.set_caption("Morse Code Game")
         pygame.mouse.set_visible(False)
         
-        # Set VSync if enabled
-        if ENABLE_VSYNC:
-            try:
-                # Try to enable VSync (may not be available on all systems)
-                pygame.display.set_mode(self.screen.get_size(), self.screen.get_flags() | pygame.HWSURFACE | pygame.DOUBLEBUF)
-            except:
-                pass  # VSync not available, continue without it
+        # Clear screen to black to avoid flickering
+        self.screen.fill((0, 0, 0))
+        pygame.display.flip()
+        
+        # Small delay to ensure display is stable (only if smooth startup enabled)
+        if SMOOTH_STARTUP:
+            pygame.time.wait(100)
     
     def _on_gpio_press(self):
         """Handle GPIO key press - route to appropriate controller based on game state."""
@@ -183,6 +194,10 @@ class MorseApp:
         try:
             # Start GPIO handler
             self.gpio_handler.start()
+            
+            # Small delay to ensure everything is stable before first render (only if smooth startup enabled)
+            if SMOOTH_STARTUP:
+                pygame.time.wait(200)
             
             while self.running:
                 # Process events
