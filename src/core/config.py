@@ -56,17 +56,27 @@ DIFFICULTY_SETTINGS = {
 
 
 # Display settings - optimized for Raspberry Pi 4 performance
-# These will be updated at runtime to match the display
+# These will be updated at runtime to match display
 SCREEN_INFO = None  # Will store display info
-SCREEN_WIDTH = 1024  # Optimized resolution for RPi 4
-SCREEN_HEIGHT = 728   # Optimized resolution for RPi 4
+SCREEN_WIDTH = 1024  # Base resolution for windowed mode
+SCREEN_HEIGHT = 768   # Base resolution for windowed mode
 FONT_SIZE = 48  # Base font size, will be scaled
+
+# Raspberry Pi specific display settings
+RPI_FULLSCREEN = True  # Force fullscreen on RPi
+RPI_NATIVE_RESOLUTION = True  # Use native display resolution on RPi
+RPI_SCALING = 1.0  # UI scaling factor for RPi
 
 # Performance settings for Raspberry Pi 4
 TARGET_FPS = 20  # Reduced from 30 for better performance on RPi 4
 ENABLE_CRT_EFFECT = True  # Can be disabled for performance
 ENABLE_NEON_EFFECTS = True  # Can be disabled for performance
 ENABLE_PARTICLE_EFFECTS = False  # Disabled by default for performance
+
+# RPi performance optimizations
+RPI_HARDWARE_ACCEL = True  # Enable hardware acceleration
+RPI_DOUBLE_BUFFER = True  # Enable double buffering
+RPI_VSYNC = True  # Enable vertical sync
 
 # Typography settings
 LETTER_SPACING_MULTIPLIER = 0.6  # Spacing between letters as fraction of font size (increased)

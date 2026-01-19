@@ -78,32 +78,83 @@ class MorseApp:
         self.target_fps = TARGET_FPS
     
     def _setup_display(self):
-        """Set up the display based on configuration."""
-        if self.fullscreen:
-            self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.FULLSCREEN)
+        """Set up display based on configuration and platform."""
+        from .config import (RPI_FULLSCREEN, RPI_NATIVE_RESOLUTION, RPI_SCALING,
+                          RPI_HARDWARE_ACCEL, RPI_DOUBLE_BUFFER, RPI_VSYNC)
+        
+        # Check if running on Raspberry Pi
+        is_rpi = self._is_raspberry_pi()
+        
+        if is_rpi and RPI_NATIVE_RESOLUTION:
+            # Get native display resolution on RPi
+            info = pygame.display.Info()
+            native_width = info.current_w
+            native_height = info.current_h
+            
+            print(f"RPi detected: native resolution {native_width}x{native_height}")
+            
+            # Set up display flags for RPi
+            flags = pygame.FULLSCREEN if RPI_FULLSCREEN else 0
+            if RPI_HARDWARE_ACCEL:
+                flags |= pygame.HWSURFACE
+            if RPI_DOUBLE_BUFFER:
+                flags |= pygame.DOUBLEBUF
+            
+            self.screen = pygame.display.set_mode((native_width, native_height), flags)
+            
+            # Apply scaling if needed
+            if RPI_SCALING != 1.0:
+                self.screen = pygame.transform.scale(self.screen, 
+                    (int(native_width * RPI_SCALING), 
+                     int(native_height * RPI_SCALING)))
         else:
-            self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+            # Standard display setup for non-RPi or windowed mode
+            if self.fullscreen:
+                self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.FULLSCREEN)
+            else:
+                self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
         
         pygame.display.set_caption("Morse Code Game")
         pygame.mouse.set_visible(False)
+    
+    def _is_raspberry_pi(self):
+        """Check if running on Raspberry Pi."""
+        try:
+            with open('/proc/cpuinfo', 'r') as f:
+                cpuinfo = f.read()
+                return 'BCM2835' in cpuinfo or 'BCM2711' in cpuinfo
+        except:
+            return False
     
     def _on_gpio_press(self):
         """Handle GPIO key press - route to appropriate controller based on game state."""
         from .core.game_state import GameState
         
+        print(f"GPIO Press: текущее состояние = {self.state_manager.current_state}")
+        
         if self.state_manager.current_state == GameState.PLAYING:
+            print("GPIO Press: маршрутизация в on_key_press (игра)")
             self.game_controller.on_key_press()
         elif self.state_manager.current_state == GameState.PRACTICE:
+            print("GPIO Press: маршрутизация в on_practice_key_press (практика)")
             self.game_controller.on_practice_key_press()
+        else:
+            print("GPIO Press: состояние не требует обработки")
     
     def _on_gpio_release(self, press_duration: float):
         """Handle GPIO key release - route to appropriate controller based on game state."""
         from .core.game_state import GameState
         
+        print(f"GPIO Release: текущее состояние = {self.state_manager.current_state}, длительность = {press_duration:.3f}s")
+        
         if self.state_manager.current_state == GameState.PLAYING:
+            print("GPIO Release: маршрутизация в on_key_release (игра)")
             self.game_controller.on_key_release(press_duration)
         elif self.state_manager.current_state == GameState.PRACTICE:
+            print("GPIO Release: маршрутизация в on_practice_key_release (практика)")
             self.game_controller.on_practice_key_release(press_duration)
+        else:
+            print("GPIO Release: состояние не требует обработки")
     
     def toggle_fullscreen(self):
         """Toggle between fullscreen and windowed mode."""
