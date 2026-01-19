@@ -212,7 +212,7 @@ class MegohmmeterController:
         
         target_value = self.dot_amplitude
         print(f"Мегомметр: применяем точку - амплитуда {target_value:.2f}")
-        self._smooth_transition_to(target_value, duration=0.25)  # Увеличено с 0.15 до 0.25
+        self._smooth_transition_to(target_value, duration=0.15)  # Возвращено как было
     
     def apply_dash(self):
         """Применить амплитуду тире (сильное отклонение)."""
@@ -224,7 +224,7 @@ class MegohmmeterController:
         
         target_value = self.dash_amplitude
         print(f"Мегомметр: применяем тире - амплитуда {target_value:.2f}")
-        self._smooth_transition_to(target_value, duration=0.35)  # Увеличено с 0.25 до 0.35
+        self._smooth_transition_to(target_value, duration=0.25)  # Возвращено как было
     
     def _smooth_transition_to(self, target_value: float, duration: float):
         """Плавный переход к указанному значению за заданное время."""
