@@ -15,7 +15,7 @@ MEGOHMMETER_PWM_FREQUENCY = 1000  # PWM frequency for smooth needle movement
 MEGOHMMETER_SMOOTH_TRANSITION = True  # Enable smooth needle transitions
 
 # Megohmmeter needle behavior
-MEGOHMMETER_BASELINE_FORCE = 0.15  # Pullback coil strength when key is released (increased)
+MEGOHMMETER_BASELINE_FORCE = 0.25  # Pullback coil strength when key is released (further increased)
 MEGOHMMETER_DOT_AMPLITUDE = 0.6    # Amplitude for dots (increased to overcome pullback)
 MEGOHMMETER_DASH_AMPLITUDE = 1.0   # Amplitude for dashes (maximum to overcome pullback)
 

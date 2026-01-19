@@ -41,7 +41,7 @@ class MegohmmeterController:
         self.is_key_pressed = False
         
         # Параметры управления
-        self.baseline_force = 0.15  # Сила оттягивающей катушки (увеличена)
+        self.baseline_force = 0.25  # Сила оттягивающей катушки (еще увеличена)
         self.dot_amplitude = 0.4    # Амплитуда для точек
         self.dash_amplitude = 0.9   # Амплитуда для тире
         
