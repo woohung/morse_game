@@ -16,8 +16,8 @@ MEGOHMMETER_SMOOTH_TRANSITION = True  # Enable smooth needle transitions
 
 # Megohmmeter needle behavior
 MEGOHMMETER_BASELINE_FORCE = 0.1  # Pullback coil strength when key is released
-MEGOHMMETER_DOT_AMPLITUDE = 0.4    # Amplitude for dots (short deviation)
-MEGOHMMETER_DASH_AMPLITUDE = 0.9   # Amplitude for dashes (strong deviation)
+MEGOHMMETER_DOT_AMPLITUDE = 0.6    # Amplitude for dots (increased to overcome pullback)
+MEGOHMMETER_DASH_AMPLITUDE = 1.0   # Amplitude for dashes (maximum to overcome pullback)
 
 
 # Morse timing model

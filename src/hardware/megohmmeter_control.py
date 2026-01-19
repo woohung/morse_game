@@ -178,6 +178,9 @@ class MegohmmeterController:
         # Отключаем оттягивающую катушку при нажатии
         self._disable_pullback_force()
         
+        # Небольшая задержка для исчезновения магнитного поля оттягивающей катушки
+        time.sleep(0.05)
+        
         # Устанавливаем начальное отклонение на основной катушке (амплитуда точки)
         initial_value = self.dot_amplitude
         self._set_meter_value(initial_value)
@@ -204,6 +207,9 @@ class MegohmmeterController:
         if not self.is_key_pressed:
             return
             
+        # Убедимся, что оттягивающая катушка отключена
+        self._disable_pullback_force()
+        
         target_value = self.dot_amplitude
         print(f"Мегомметр: применяем точку - амплитуда {target_value:.2f}")
         self._smooth_transition_to(target_value, duration=0.15)
@@ -213,6 +219,9 @@ class MegohmmeterController:
         if not self.is_key_pressed:
             return
             
+        # Убедимся, что оттягивающая катушка отключена
+        self._disable_pullback_force()
+        
         target_value = self.dash_amplitude
         print(f"Мегомметр: применяем тире - амплитуда {target_value:.2f}")
         self._smooth_transition_to(target_value, duration=0.25)
@@ -309,14 +318,26 @@ class MockMegohmmeterController(MegohmmeterController):
     
     def initialize(self) -> bool:
         """Mock инициализация всегда успешна."""
-        print(f"Mock мегомметр инициализирован на GPIO {self.meter_pin}")
+        print(f"Mock мегомметр инициализирован:")
+        print(f"  Основная катушка: GPIO {self.meter_pin}")
+        print(f"  Оттягивающая катушка: GPIO {self.pullback_pin}")
         self.is_initialized = True
+        # Устанавливаем начальное состояние
+        self._set_pullback_force()
         return True
     
-    def _set_immediate(self, value: float):
-        """Mock установка значения."""
+    def _set_pullback_force(self):
+        """Mock установка силы оттягивающей катушки."""
+        print(f"Mock мегомметр: оттягивающая катушка установлена на {self.baseline_force:.2f}")
+    
+    def _disable_pullback_force(self):
+        """Mock отключение оттягивающей катушки."""
+        print("Mock мегомметр: оттягивающая катушка отключена")
+    
+    def _set_meter_value(self, value: float):
+        """Mock установка значения на основной катушке."""
         self.current_value = value
-        print(f"Mock мегомметр: значение установлено на {value:.2f}")
+        print(f"Mock мегомметр: основная катушка установлена на {value:.2f}")
     
     def key_pressed(self):
         """Обработчик нажатия на телеграфный ключ - начало отклонения."""
@@ -327,9 +348,12 @@ class MockMegohmmeterController(MegohmmeterController):
         if self.transition_thread and self.transition_thread.is_alive():
             self.transition_thread.join(timeout=0.05)
         
-        # Устанавливаем начальное отклонение (амплитуда точки)
+        # Отключаем оттягивающую катушку при нажатии
+        self._disable_pullback_force()
+        
+        # Устанавливаем начальное отклонение на основной катушке (амплитуда точки)
         initial_value = self.dot_amplitude
-        self.current_value = initial_value
+        self._set_meter_value(initial_value)
         print(f"Mock мегомметр: начальное отклонение установлено на {initial_value:.2f}")
     
     def key_released(self):
@@ -341,9 +365,12 @@ class MockMegohmmeterController(MegohmmeterController):
         if self.transition_thread and self.transition_thread.is_alive():
             self.transition_thread.join(timeout=0.05)
         
-        # Возвращаем к базовому подпору (минимальное отклонение)
-        self.current_value = self.baseline_force
-        print(f"Mock мегомметр: базовый подпор установлен на {self.baseline_force:.2f} (минимальное отклонение)")
+        # Отключаем основную катушку
+        self._set_meter_value(0.0)
+        
+        # Включаем оттягивающую катушку
+        self._set_pullback_force()
+        print(f"Mock мегомметр: оттягивающая катушка включена для возврата стрелки")
     
     def apply_dot(self):
         """Применить амплитуду точки (короткое отклонение)."""
