@@ -220,6 +220,83 @@ class UIRenderer:
         
         return final_surface
     
+    def _create_golden_glow_border(self, surface: pygame.Surface, intensity: float = 1.0) -> pygame.Surface:
+        """Create golden glow effect around terminal border."""
+        glow_surface = surface.copy()
+        width, height = glow_surface.get_size()
+        
+        # Golden glow colors
+        glow_colors = [
+            (255, 215, 0),   # Gold
+            (255, 223, 0),   # Golden yellow
+            (255, 193, 37),  # Dark gold
+            (255, 255, 100), # Light gold
+        ]
+        
+        # Create multiple layers of glow with decreasing intensity
+        for layer in range(3):
+            alpha = int(80 * intensity * (1 - layer * 0.3))  # Decreasing alpha for each layer
+            if alpha <= 0:
+                continue
+                
+            glow_layer = pygame.Surface((width, height), pygame.SRCALPHA)
+            
+            # Draw border with glow effect
+            border_width = 3 + layer * 2  # Increasing border width for each layer
+            
+            # Top and bottom borders
+            for x in range(0, width, 5):  # Draw in steps for performance
+                color_idx = (x // 10 + layer) % len(glow_colors)
+                color = (*glow_colors[color_idx], alpha)
+                
+                # Top border
+                pygame.draw.rect(glow_layer, color, (x, 0, 5, border_width))
+                # Bottom border  
+                pygame.draw.rect(glow_layer, color, (x, height - border_width, 5, border_width))
+            
+            # Left and right borders
+            for y in range(0, height, 5):
+                color_idx = (y // 10 + layer) % len(glow_colors)
+                color = (*glow_colors[color_idx], alpha)
+                
+                # Left border
+                pygame.draw.rect(glow_layer, color, (0, y, border_width, 5))
+                # Right border
+                pygame.draw.rect(glow_layer, color, (width - border_width, y, border_width, 5))
+            
+            # Apply the glow layer
+            glow_surface.blit(glow_layer, (0, 0))
+        
+        return glow_surface
+
+    def _create_bonus_time_overlay(self, bonus_amount: int, intensity: float = 1.0) -> pygame.Surface:
+        """Create transparent overlay with bonus time text."""
+        # Create a surface for the overlay
+        overlay = pygame.Surface((400, 150), pygame.SRCALPHA)
+        
+        # Semi-transparent background
+        bg_alpha = int(180 * intensity)
+        pygame.draw.rect(overlay, (255, 215, 0, bg_alpha), (0, 0, 400, 150))
+        pygame.draw.rect(overlay, (255, 255, 255, bg_alpha // 2), (2, 2, 396, 146), 3)
+        
+        # Create bonus text
+        bonus_text = f"+{bonus_amount} сек."
+        
+        # Use large font for the bonus text
+        try:
+            font = pygame.font.Font(None, 72)
+        except:
+            font = self.title_font
+        
+        # Render text with golden glow effect
+        text_surface = font.render(bonus_text, True, (255, 255, 255))
+        
+        # Center the text on the overlay
+        text_rect = text_surface.get_rect(center=(200, 75))
+        overlay.blit(text_surface, text_rect)
+        
+        return overlay
+
     def _draw_neon_text(self, text: str, x: int, y: int, font: pygame.font.Font, 
                        color: tuple, glow_color: tuple = None, intensity: int = 3, 
                        center_x: bool = False, center_y: bool = False):
@@ -302,6 +379,30 @@ class UIRenderer:
             else:
                 # Clear error time after effect duration
                 state_manager.game_data.error_time = None
+        
+        # Apply bonus time effects if bonus was recently received
+        if hasattr(state_manager.game_data, 'bonus_time_received') and state_manager.game_data.bonus_time_received:
+            time_since_bonus = current_time - state_manager.game_data.bonus_time_received
+            # Show bonus effects for 2.0 seconds after bonus
+            if time_since_bonus < 2.0:
+                # Calculate intensity based on time since bonus (fade out)
+                intensity = 1.0 - (time_since_bonus / 2.0)
+                
+                # Apply golden glow border effect
+                if intensity > 0:
+                    glow_surface = self._create_golden_glow_border(target_surface, intensity)
+                    target_surface.blit(glow_surface, (0, 0))
+                    
+                    # Apply bonus time overlay in center
+                    bonus_overlay = self._create_bonus_time_overlay(state_manager.game_data.bonus_amount, intensity)
+                    # Center the overlay on screen
+                    overlay_x = (target_surface.get_width() - bonus_overlay.get_width()) // 2
+                    overlay_y = (target_surface.get_height() - bonus_overlay.get_height()) // 2
+                    target_surface.blit(bonus_overlay, (overlay_x, overlay_y))
+            else:
+                # Clear bonus time after effect duration
+                state_manager.game_data.bonus_time_received = None
+                state_manager.game_data.bonus_amount = 0
     
     def _draw_practice_screen(self, state_manager: GameStateManager, morse_sequence: str, current_time: float):
         """Draw practice mode screen with single letter training and Morse alphabet reference."""

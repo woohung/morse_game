@@ -47,6 +47,10 @@ class GameData:
         
         # Error effect data
         self.error_time: Optional[float] = None  # Time when error occurred for glitch effect
+        
+        # Bonus time effect data
+        self.bonus_time_received: Optional[float] = None  # Time when bonus was received
+        self.bonus_amount: int = 0  # Amount of bonus time received
 
 class MenuOption:
     """Menu option class."""

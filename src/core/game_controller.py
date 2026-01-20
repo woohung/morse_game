@@ -307,6 +307,9 @@ class GameController:
                     # Add bonus time
                     old_time = self.state_manager.game_data.time_remaining
                     self.state_manager.game_data.time_remaining += bonus_amount
+                    # Set bonus effect data
+                    self.state_manager.game_data.bonus_time_received = time.time()
+                    self.state_manager.game_data.bonus_amount = bonus_amount
                     print(f"TIME BONUS! +{bonus_amount}s added (every {bonus_every} words on hard mode)")
                     print(f"Time before: {old_time:.1f}s, Time after: {self.state_manager.game_data.time_remaining:.1f}s")
         
@@ -320,6 +323,9 @@ class GameController:
                     # Add streak bonus time
                     old_time = self.state_manager.game_data.time_remaining
                     self.state_manager.game_data.time_remaining += streak_amount
+                    # Set bonus effect data
+                    self.state_manager.game_data.bonus_time_received = time.time()
+                    self.state_manager.game_data.bonus_amount = streak_amount
                     print(f"STREAK BONUS! +{streak_amount}s added ({self.state_manager.game_data.streak_count} word streak!)")
                     print(f"Time before: {old_time:.1f}s, Time after: {self.state_manager.game_data.time_remaining:.1f}s")
         
