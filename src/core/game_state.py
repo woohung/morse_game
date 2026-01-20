@@ -4,7 +4,7 @@ Game state management for Morse Code Game
 from enum import Enum
 from typing import Optional, List, Dict, Any
 import time
-from .config import WORD_TIME_LIMIT, TIME_PER_LETTER, O_LETTER_BONUS, DIFFICULTY_SETTINGS
+from .config import WORD_TIME_LIMIT, TIME_PER_LETTER, DIFFICULTY_SETTINGS
 from ..data.high_scores import HighScoreManager
 
 class GameState(Enum):
@@ -213,9 +213,8 @@ class GameStateManager:
             settings = DIFFICULTY_SETTINGS.get(self.game_data.difficulty, DIFFICULTY_SETTINGS['easy'])
             base_time = settings['word_time_limit']
             letter_time = len(word) * settings['time_per_letter']
-            o_bonus = word.upper().count('O') * settings['o_letter_bonus']
-            self.game_data.word_time_limit = base_time + letter_time + o_bonus
-            print(f"Word '{word}' ({self.game_data.difficulty}) - Time limit: {self.game_data.word_time_limit:.1f}s (base: {base_time}s, letters: {letter_time}s, O-bonus: {o_bonus}s)")
+            self.game_data.word_time_limit = base_time + letter_time
+            print(f"Word '{word}' ({self.game_data.difficulty}) - Time limit: {self.game_data.word_time_limit:.1f}s (base: {base_time}s, letters: {letter_time}s)")
         else:
             self.game_data.word_time_limit = WORD_TIME_LIMIT
     

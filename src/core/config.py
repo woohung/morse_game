@@ -34,20 +34,20 @@ DEBOUNCE_TIME = 0
 # Game timing
 WORD_TIME_LIMIT = 10.0  # Base time limit per word in seconds
 TIME_PER_LETTER = 3.0   # Additional time per letter
-O_LETTER_BONUS = 2.0    # Extra time for each 'O' letter (--- is long)
+# O letter bonus removed
 
 # Difficulty settings
 DIFFICULTY_SETTINGS = {
     'easy': {
         'word_time_limit': 15.0,  # More base time for easy mode
         'time_per_letter': 2.5,   # Less time pressure per letter
-        'o_letter_bonus': 1.5,    # Smaller bonus for O letters
+        'o_letter_bonus': 0.0,    # No bonus for O letters
         'game_duration': 120.0    # 2 minutes for easy mode
     },
     'hard': {
         'word_time_limit': 8.0,   # Less base time for hard mode
         'time_per_letter': 2.0,   # More time pressure per letter
-        'o_letter_bonus': 1.0,    # Minimal bonus for O letters
+        'o_letter_bonus': 0.0,    # No bonus for O letters
         'game_duration': 90.0,     # 1.5 minutes for hard mode
         'time_bonus_every_words': 3,  # Bonus time every N words
         'time_bonus_amount': 15.0     # Bonus time amount in seconds
