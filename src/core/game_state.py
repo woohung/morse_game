@@ -36,6 +36,8 @@ class GameData:
         self.total_errors: int = 0  # Track total errors for tie-breaking
         self.word_start_time: Optional[float] = None  # Track when current word started
         self.word_time_limit: float = WORD_TIME_LIMIT  # Time limit per word in seconds
+        self.streak_count: int = 0  # Track consecutive words without errors
+        self.current_word_has_error: bool = False  # Track if current word has errors
         
         # Practice mode specific data
         self.practice_letter: str = ""  # Current letter for practice
@@ -232,8 +234,26 @@ class GameStateManager:
         return max(0, self.game_data.word_time_limit - elapsed)
     
     def add_error(self):
-        """Add an error to the total count."""
+        """Add an error to the total count and mark current word as having error."""
         self.game_data.total_errors += 1
+        self.game_data.current_word_has_error = True
+    
+    def reset_streak(self):
+        """Reset the streak counter."""
+        self.game_data.streak_count = 0
+    
+    def increment_streak(self):
+        """Increment streak counter for word completed without errors."""
+        if not self.game_data.current_word_has_error:
+            self.game_data.streak_count += 1
+        else:
+            self.game_data.streak_count = 1  # Start new streak with current word
+        self.game_data.current_word_has_error = False  # Reset for next word
+    
+    def start_new_word(self):
+        """Reset error tracking for new word."""
+        self.game_data.current_word_has_error = False
+        self.game_data.letter_errors.clear()
     
     def set_difficulty(self, difficulty: str):
         """Set game difficulty."""

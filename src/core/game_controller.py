@@ -290,11 +290,15 @@ class GameController:
     def _word_completed(self):
         """Handle successful completion of current word."""
         self.state_manager.game_data.words_completed += 1
+        self.state_manager.increment_streak()
         print(f"Word completed successfully! Total: {self.state_manager.game_data.words_completed}")
+        print(f"Current streak: {self.state_manager.game_data.streak_count} words without errors")
         
-        # Check for time bonus on hard difficulty
+        # Check for time bonus based on difficulty
+        settings = self.state_manager.get_difficulty_settings()
+        
         if self.state_manager.game_data.difficulty == 'hard':
-            settings = self.state_manager.get_difficulty_settings()
+            # Hard mode: bonus every N words
             bonus_every = settings.get('time_bonus_every_words', 0)
             bonus_amount = settings.get('time_bonus_amount', 0)
             
@@ -306,11 +310,25 @@ class GameController:
                     print(f"TIME BONUS! +{bonus_amount}s added (every {bonus_every} words on hard mode)")
                     print(f"Time before: {old_time:.1f}s, Time after: {self.state_manager.game_data.time_remaining:.1f}s")
         
+        elif self.state_manager.game_data.difficulty == 'easy':
+            # Easy mode: streak bonus
+            streak_every = settings.get('streak_bonus_every_words', 0)
+            streak_amount = settings.get('streak_bonus_amount', 0)
+            
+            if streak_every > 0 and streak_amount > 0:
+                if self.state_manager.game_data.streak_count % streak_every == 0:
+                    # Add streak bonus time
+                    old_time = self.state_manager.game_data.time_remaining
+                    self.state_manager.game_data.time_remaining += streak_amount
+                    print(f"STREAK BONUS! +{streak_amount}s added ({self.state_manager.game_data.streak_count} word streak!)")
+                    print(f"Time before: {old_time:.1f}s, Time after: {self.state_manager.game_data.time_remaining:.1f}s")
+        
         self._get_next_word()
     
     def _word_time_expired(self):
         """Handle word time expiration - move to next word without counting."""
         print(f"Word time expired! Word not counted.")
+        self.state_manager.reset_streak()  # Reset streak on timeout
         self._get_next_word()
     
     def _get_next_word(self):
@@ -321,6 +339,9 @@ class GameController:
         self.state_manager.game_data.current_letter_index = 0
         self.state_manager.game_data.letter_errors = {}
         self.current_sequence = ""
+        
+        # Reset error tracking for new word
+        self.state_manager.start_new_word()
         
         # Start timer for new word
         self.state_manager.start_word_timer(self.state_manager.game_data.current_word)

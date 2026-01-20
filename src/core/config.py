@@ -39,14 +39,16 @@ TIME_PER_LETTER = 3.0   # Additional time per letter
 # Difficulty settings
 DIFFICULTY_SETTINGS = {
     'easy': {
-        'word_time_limit': 15.0,  # More base time for easy mode
-        'time_per_letter': 2.5,   # Less time pressure per letter
+        'word_time_limit': 10.0,  # Reduced base time for easy mode
+        'time_per_letter': 1.5,   # More time pressure per letter
         'o_letter_bonus': 0.0,    # No bonus for O letters
-        'game_duration': 120.0    # 2 minutes for easy mode
+        'game_duration': 90.0,     # Reduced to 1.5 minutes for easy mode
+        'streak_bonus_every_words': 3,  # Bonus time every N words without errors
+        'streak_bonus_amount': 10.0     # Bonus time amount in seconds
     },
     'hard': {
         'word_time_limit': 8.0,   # Less base time for hard mode
-        'time_per_letter': 2.0,   # More time pressure per letter
+        'time_per_letter': 1.5,   # More time pressure per letter
         'o_letter_bonus': 0.0,    # No bonus for O letters
         'game_duration': 90.0,     # 1.5 minutes for hard mode
         'time_bonus_every_words': 3,  # Bonus time every N words
