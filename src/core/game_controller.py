@@ -319,7 +319,7 @@ class GameController:
             streak_amount = settings.get('streak_bonus_amount', 0)
             
             if streak_every > 0 and streak_amount > 0:
-                if self.state_manager.game_data.streak_count % streak_every == 0:
+                if self.state_manager.game_data.streak_count == streak_every:
                     # Add streak bonus time
                     old_time = self.state_manager.game_data.time_remaining
                     self.state_manager.game_data.time_remaining += streak_amount
