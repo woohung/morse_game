@@ -211,9 +211,10 @@ class GameController:
             # Add to total errors for tie-breaking
             self.state_manager.add_error()
             
-            # Mark as red
+            # Mark as red and trigger glitch effect
             letter_colors[current_index] = 'red'
             self.state_manager.game_data.letter_colors = letter_colors
+            self.state_manager.game_data.error_time = time.time()  # Set error time for glitch effect
             print(f"Wrong! '{decoded_char}' doesn't match '{target_char}' (errors: {error_count})")
         
         # Reset current sequence
@@ -451,6 +452,7 @@ class GameController:
             print(f"Practice wrong! '{decoded_char}' doesn't match '{target_char}'")
             self.state_manager.game_data.practice_letter_color = "red"
             self.state_manager.game_data.practice_errors += 1
+            self.state_manager.game_data.error_time = time.time()  # Set error time for glitch effect
         
         # Reset current sequence
         self.current_sequence = ""

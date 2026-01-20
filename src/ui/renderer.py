@@ -115,6 +115,77 @@ class UIRenderer:
         crt_surface.blit(vignette, (0, 0))
         return crt_surface
 
+    def _create_glitch_effect(self, surface: pygame.Surface, intensity: float = 1.0) -> pygame.Surface:
+        """Create glitch/static effect for error feedback."""
+        glitch_surface = surface.copy()
+        width, height = glitch_surface.get_size()
+        
+        # Create random noise lines
+        num_lines = int(10 * intensity)  # Number of glitch lines based on intensity
+        for _ in range(num_lines):
+            y = random.randint(0, height - 1)
+            line_height = random.randint(1, 3)
+            x_offset = random.randint(-20, 20)
+            
+            # Create horizontal glitch line with color distortion
+            for dy in range(line_height):
+                if y + dy < height:
+                    # Shift and distort the line
+                    temp_line = glitch_surface.subsurface((0, y + dy, width, 1)).copy()
+                    glitch_surface.blit(temp_line, (x_offset, y + dy))
+                    
+                    # Add color distortion
+                    color_shift = random.choice([
+                        (255, 0, 0),    # Red
+                        (0, 255, 0),    # Green  
+                        (0, 0, 255),    # Blue
+                        (255, 255, 0),  # Yellow
+                        (255, 0, 255),  # Magenta
+                    ])
+                    
+                    # Apply color overlay with transparency
+                    color_surface = pygame.Surface((width, 1))
+                    color_surface.set_alpha(random.randint(20, 60))
+                    color_surface.fill(color_shift)
+                    glitch_surface.blit(color_surface, (0, y + dy))
+        
+        # Add random noise blocks
+        num_blocks = int(5 * intensity)
+        for _ in range(num_blocks):
+            block_x = random.randint(0, width - 50)
+            block_y = random.randint(0, height - 20)
+            block_w = random.randint(10, 50)
+            block_h = random.randint(2, 10)
+            
+            # Create noise block
+            noise_surface = pygame.Surface((block_w, block_h))
+            noise_surface.set_alpha(random.randint(30, 80))
+            
+            # Random color for noise
+            noise_color = (
+                random.randint(100, 255),
+                random.randint(0, 100),
+                random.randint(0, 100)
+            )
+            noise_surface.fill(noise_color)
+            glitch_surface.blit(noise_surface, (block_x, block_y))
+        
+        # Add pixelation effect in random areas
+        if random.random() < 0.3 * intensity:  # 30% chance per frame
+            pixelate_x = random.randint(0, width - 100)
+            pixelate_y = random.randint(0, height - 50)
+            pixelate_w = random.randint(50, 100)
+            pixelate_h = random.randint(20, 50)
+            
+            # Create pixelated area
+            if pixelate_x + pixelate_w <= width and pixelate_y + pixelate_h <= height:
+                area = glitch_surface.subsurface((pixelate_x, pixelate_y, pixelate_w, pixelate_h))
+                pixelated = pygame.transform.scale(area, (pixelate_w // 4, pixelate_h // 4))
+                pixelated = pygame.transform.scale(pixelated, (pixelate_w, pixelate_h))
+                glitch_surface.blit(pixelated, (pixelate_x, pixelate_y))
+        
+        return glitch_surface
+
     def _create_neon_text(self, text: str, font: pygame.font.Font, color: tuple, 
                          glow_color: tuple = None, intensity: int = 1) -> pygame.Surface:
         """Create optimized text with subtle glow effect."""
@@ -218,6 +289,19 @@ class UIRenderer:
         if ENABLE_CRT_EFFECT:
             crt_surface = self._create_crt_effect(target_surface)
             target_surface.blit(crt_surface, (0, 0))
+        
+        # Apply glitch effect if there was a recent error
+        if hasattr(state_manager.game_data, 'error_time') and state_manager.game_data.error_time:
+            time_since_error = current_time - state_manager.game_data.error_time
+            # Show glitch effect for 0.5 seconds after error
+            if time_since_error < 0.5:
+                # Calculate intensity based on time since error (fade out)
+                intensity = 1.0 - (time_since_error / 0.5)
+                glitch_surface = self._create_glitch_effect(target_surface, intensity)
+                target_surface.blit(glitch_surface, (0, 0))
+            else:
+                # Clear error time after effect duration
+                state_manager.game_data.error_time = None
     
     def _draw_practice_screen(self, state_manager: GameStateManager, morse_sequence: str, current_time: float):
         """Draw practice mode screen with single letter training and Morse alphabet reference."""

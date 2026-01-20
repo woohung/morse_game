@@ -42,6 +42,9 @@ class GameData:
         self.practice_letter_color: str = "white"  # Color state for practice letter
         self.practice_completed: int = 0  # Number of letters completed in practice
         self.practice_errors: int = 0  # Errors in practice mode
+        
+        # Error effect data
+        self.error_time: Optional[float] = None  # Time when error occurred for glitch effect
 
 class MenuOption:
     """Menu option class."""
