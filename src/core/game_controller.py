@@ -298,19 +298,19 @@ class GameController:
         settings = self.state_manager.get_difficulty_settings()
         
         if self.state_manager.game_data.difficulty == 'hard':
-            # Hard mode: bonus every N words
-            bonus_every = settings.get('time_bonus_every_words', 0)
+            # Hard mode: bonus every 3 consecutive correct words without errors
+            bonus_every = 3  # Fixed to 3 consecutive words
             bonus_amount = settings.get('time_bonus_amount', 0)
             
-            if bonus_every > 0 and bonus_amount > 0:
-                if self.state_manager.game_data.words_completed % bonus_every == 0:
+            if bonus_amount > 0:
+                if self.state_manager.game_data.streak_count > 0 and self.state_manager.game_data.streak_count % bonus_every == 0:
                     # Add bonus time
                     old_time = self.state_manager.game_data.time_remaining
                     self.state_manager.game_data.time_remaining += bonus_amount
                     # Set bonus effect data
                     self.state_manager.game_data.bonus_time_received = time.time()
                     self.state_manager.game_data.bonus_amount = bonus_amount
-                    print(f"TIME BONUS! +{bonus_amount}s added (every {bonus_every} words on hard mode)")
+                    print(f"STREAK BONUS! +{bonus_amount}s added ({self.state_manager.game_data.streak_count} consecutive correct words!)")
                     print(f"Time before: {old_time:.1f}s, Time after: {self.state_manager.game_data.time_remaining:.1f}s")
         
         elif self.state_manager.game_data.difficulty == 'easy':

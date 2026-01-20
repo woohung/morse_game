@@ -251,7 +251,7 @@ class GameStateManager:
         if not self.game_data.current_word_has_error:
             self.game_data.streak_count += 1
         else:
-            self.game_data.streak_count = 1  # Start new streak with current word
+            self.game_data.streak_count = 0  # Reset streak when word has errors
         self.game_data.current_word_has_error = False  # Reset for next word
     
     def start_new_word(self):

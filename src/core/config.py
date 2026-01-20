@@ -51,8 +51,7 @@ DIFFICULTY_SETTINGS = {
         'time_per_letter': 1.5,   # More time pressure per letter
         'o_letter_bonus': 0.0,    # No bonus for O letters
         'game_duration': 90.0,     # 1.5 minutes for hard mode
-        'time_bonus_every_words': 3,  # Bonus time every N words
-        'time_bonus_amount': 15.0     # Bonus time amount in seconds
+        'time_bonus_amount': 15.0     # Bonus time amount for 3 consecutive correct words
     }
 }
 
