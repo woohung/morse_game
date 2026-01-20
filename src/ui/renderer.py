@@ -545,52 +545,43 @@ class UIRenderer:
             elif i == 20:
                 separator = "╠" + "─" * (terminal_width - 2) + "╣"
                 self._draw_terminal_text(separator, 0, i, border_color)
-            elif 21 <= i <= 28:
-                # Display Morse alphabet in columns with proper alignment
-                alphabet_start_index = (i - 21) * 3  # 3 letters per line
-                letters = list(MORSE_CODE_DICT.keys())[:26]  # A-Z only
+            elif 21 <= i <= 25:
+                # Display Morse alphabet in 6 columns with proper alignment
+                alphabet_start_index = (i - 21) * 6  # 6 letters per line
+                # Show only letters A-Z for better fit
+                letters = [k for k in MORSE_CODE_DICT.keys() if k.isalpha()][:26]
                 alphabet_line_parts = []
                 
-                for j in range(3):
+                for j in range(6):
                     letter_index = alphabet_start_index + j
                     if letter_index < len(letters):
                         letter = letters[letter_index]
                         morse = MORSE_CODE_DICT[letter]
-                        # Fixed width formatting for proper alignment - letter fixed width, morse aligned
-                        alphabet_line_parts.append(f"{letter}  {morse}")
+                        # Fixed width formatting for proper alignment
+                        alphabet_line_parts.append(f"{letter:<2}{morse:<6}")
                 
-                # Calculate column width for proper alignment
-                col_width = 10  # Approximate width for each column
-                formatted_parts = []
-                for part in alphabet_line_parts:
-                    formatted_parts.append(part.ljust(col_width))
-                
-                # Use fixed spacing between columns
-                alphabet_text = "".join(formatted_parts)
+                # Join with single spaces for compact display
+                alphabet_text = " ".join(alphabet_line_parts)
                 alphabet_line = self._format_terminal_line(alphabet_text, terminal_width)
                 self._draw_terminal_text(alphabet_line, 0, i, COLORS['text'])
-            elif i == 30:
+            elif i == 26:
                 separator = "╠" + "─" * (terminal_width - 2) + "╣"
                 self._draw_terminal_text(separator, 0, i, border_color)
-            elif i == 31:
+            elif i == 27:
                 inst_header_content = "COMMANDS:"
                 inst_header = self._format_terminal_line(inst_header_content, terminal_width)
                 self._draw_terminal_text(inst_header, 0, i, COLORS['title'])
-            elif i == 32:
+            elif i == 28:
                 inst_content = "• SPACE : Input Morse"
                 inst_line = self._format_terminal_line(inst_content, terminal_width)
                 self._draw_terminal_text(inst_line, 0, i, COLORS['hint'])
-            elif i == 33:
-                inst_content = "• C : Clear input"
+            elif i == 29:
+                inst_content = "• ESC : Back to menu"
                 inst_line = self._format_terminal_line(inst_content, terminal_width)
                 self._draw_terminal_text(inst_line, 0, i, COLORS['hint'])
             elif i == terminal_height - 3:
                 separator = "╠" + "═" * (terminal_width - 2) + "╣"
                 self._draw_terminal_text(separator, 0, i, border_color)
-            elif i == terminal_height - 2:
-                escape_content = "• ESC : Back to menu"
-                escape_line = self._format_terminal_line(escape_content, terminal_width)
-                self._draw_terminal_text(escape_line, 0, i, COLORS['hint'])
             else:
                 empty = self._format_terminal_line("", terminal_width)
                 self._draw_terminal_text(empty, 0, i, border_color)
