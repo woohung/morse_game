@@ -1230,7 +1230,8 @@ class UIRenderer:
         actual_screen_width = screen_info.current_w
         actual_screen_height = screen_info.current_h
         
-        # Calculate exact dimensions to fill screen completely
+        # Calculate exact dimensions to fill screen completely, accounting for borders
+        # Reserve space for vertical borders (2 characters)
         terminal_width = actual_screen_width // char_width
         terminal_height = actual_screen_height // char_height
         
@@ -1241,9 +1242,10 @@ class UIRenderer:
         if actual_screen_height % char_height > char_height // 2:
             terminal_height += 1  # Use extra row if we have enough space
         
-        # Ensure minimum dimensions for readability
-        terminal_width = max(80, terminal_width)
-        terminal_height = max(25, terminal_height)
+        # Ensure we have space for borders by reducing if necessary
+        # We need at least 2 characters for vertical borders and proper content space
+        terminal_width = max(80, min(terminal_width, actual_screen_width // char_width))
+        terminal_height = max(25, min(terminal_height, actual_screen_height // char_height))
         
         return terminal_width, terminal_height
     
@@ -1751,7 +1753,8 @@ class UIRenderer:
         # Content
         for i in range(1, terminal_height - 2):
             if i == 1:
-                header = f"║ MORSE CODE TRANSMISSION - ACTIVE SESSION{' ' * (terminal_width - 45)} ║"
+                header_content = "MORSE CODE TRANSMISSION - ACTIVE SESSION"
+                header = self._format_terminal_line(header_content, terminal_width)
                 self._draw_terminal_text(header, 0, i, COLORS['title'])
             elif i == 2:
                 separator = "╠" + "═" * (terminal_width - 2) + "╣"
@@ -1787,10 +1790,10 @@ class UIRenderer:
                 spacing = available_width - base_status_len - time_display_len - 5  # Extra spacing for emphasis
                 
                 if spacing > 0:
-                    status = f"║ {base_status}{' ' * spacing}[{time_display}] ║"
+                    status = f"║ {base_status}{' ' * spacing}[{time_display}]"
                 else:
                     # Fallback if not enough space
-                    status = f"║ {base_status}  TIME: {int(time_remaining)}s ║"
+                    status = f"║ {base_status}  TIME: {int(time_remaining)}s"
                 
                 # Draw the status line
                 self._draw_terminal_text(status, 0, i, COLORS['text'])
@@ -1835,26 +1838,17 @@ class UIRenderer:
                 # Create enhanced timer display
                 timer_display = f"{timer_indicator} WORD TIMER: {word_time_remaining:.1f}s {timer_indicator} {timer_status}"
                 
-                # Build timer line with left alignment (like player status)
-                timer_line = f"║ {timer_display}{' ' * (terminal_width - len(timer_display) - 4)} ║"
+                # Build timer line with proper formatting
+                timer_line = self._format_terminal_line(timer_display, terminal_width)
                 
                 # Add pulsing effect for critical word time
                 if word_time_remaining <= 2:
                     pulse = int(time.time() * 10) % 2  # Very fast pulsing for critical
                     if pulse == 0:
                         timer_color = (255, 255, 255)  # White flash for critical
-                    # Add extra emphasis with bold font for critical time
-                    timer_surface = self.terminal_font_bold.render(timer_display, True, timer_color)
-                    
-                    # Get terminal offset for positioning
-                    offset_x, offset_y = self._get_terminal_offset()
-                    char_width, char_height = self.terminal_font.size("X")
-                    
-                    # Position timer at left edge (after border)
-                    timer_x = 2  # Start after "║ "
-                    self.screen.blit(timer_surface, (offset_x + timer_x * char_width, offset_y + i * char_height))
-                else:
-                    self._draw_terminal_text(timer_line, 0, i, timer_color)
+                
+                # Draw the timer line with proper formatting
+                self._draw_terminal_text(timer_line, 0, i, timer_color)
             elif i == 5:
                 separator = "╠" + "─" * (terminal_width - 2) + "╣"
                 self._draw_terminal_text(separator, 0, i, border_color)
@@ -2126,67 +2120,79 @@ class UIRenderer:
             elif i == 4:
                 empty = self._format_terminal_line("", terminal_width)
                 self._draw_terminal_text(empty, 0, i, border_color)
-            elif 5 <= i <= 9:
-                # ASCII art for game over
+            elif 5 <= i <= 8:
+                # ASCII art for game over - new cheerful design
                 gameover_art = [
-                    r"  ____  _   _ ____    ____    _    _     _   _____  ____  _____   ",
-                    r" |  _ \| | | | __ )  / ___|  / \  | |   | | | ____|  _ \| ____|  ",
-                    r" | |_) | | | |  _ \ | |  _  / _ \ | |   | | |  _| | |_) |  _|   ",
-                    r" |  _ <| |_| | |_) || |_| |/ ___ \| |___| | | |___|  _ <| |___  ",
-                    r" |_| \_\\___/|____/ \____|/_/   \_\\_____|_|_|_____|_| \_\\_____|  "
+                    r"    ___ ___  _  _  ___ ___    _ _____ _   _ _      _ _____ ___ ___  _  _ ___ _ ",
+                    r"  / __/ _ \| \| |/ __| _ \  /_\_   _| | | | |    /_\_   _|_ _/ _ \| \| / __| |",
+                    r" | (_| (_) | .` | (_ |   / / _ \| | | |_| | |__ / _ \| |  | | (_) | .` \__ \_|",
+                    r"  \___\___/|_|\_|\___|_|_\/_/ \_\_|  \___/|____/_/ \_\_| |___\___/|_|\_|___(_)"
                 ]
                 line_index = i - 5
                 if line_index < len(gameover_art):
-                    if random.random() < 0.08:  # More flicker for game over
+                    # Use bright gradient colors
+                    colors = [
+                        (255, 100, 100),  # Bright red
+                        (255, 150, 100),  # Orange-red
+                        (255, 200, 100),  # Orange
+                        (255, 255, 100),  # Yellow
+                        (100, 255, 100),  # Bright green
+                        (100, 200, 255),  # Bright blue
+                        (200, 100, 255),  # Purple
+                        (255, 100, 200),  # Pink
+                    ]
+                    color_index = line_index % len(colors)
+                    
+                    if random.random() < 0.08:  # Keep some flicker but with cheerful colors
                         art_line = self._format_terminal_line(gameover_art[line_index], terminal_width)
-                        self._draw_terminal_text(art_line, 0, i, (50, 150, 50))
+                        self._draw_terminal_text(art_line, 0, i, tuple(c // 2 for c in colors[color_index]))
                     else:
                         art_line = self._format_terminal_line(gameover_art[line_index], terminal_width)
-                        self._draw_terminal_text(art_line, 0, i, COLORS['wrong'])
+                        self._draw_terminal_text(art_line, 0, i, colors[color_index])
                 else:
                     empty = self._format_terminal_line("", terminal_width)
                     self._draw_terminal_text(empty, 0, i, border_color)
-            elif i == 10:
+            elif i == 9:
                 separator = "╠" + "─" * (terminal_width - 2) + "╣"
                 self._draw_terminal_text(separator, 0, i, border_color)
-            elif i == 11:
+            elif i == 10:
                 results_header = f"TRANSMISSION STATISTICS:"
                 results_line = self._format_terminal_line(results_header, terminal_width)
                 self._draw_terminal_text(results_line, 0, i, COLORS['text'])
-            elif i == 12:
+            elif i == 11:
                 separator = "╠" + "─" * (terminal_width - 2) + "╣"
                 self._draw_terminal_text(separator, 0, i, border_color)
-            elif i == 13:
+            elif i == 12:
                 result1 = f"OPERATOR: {state_manager.game_data.nickname}"
                 result1_line = self._format_terminal_line(result1, terminal_width)
                 self._draw_terminal_text(result1_line, 0, i, COLORS['text'])
-            elif i == 14:
+            elif i == 13:
                 result2 = f"WORDS TRANSMITTED: {state_manager.game_data.words_completed}"
                 result2_line = self._format_terminal_line(result2, terminal_width)
                 self._draw_terminal_text(result2_line, 0, i, COLORS['text'])
-            elif i == 15:
+            elif i == 14:
                 result3 = f"FINAL SCORE: {state_manager.game_data.score} POINTS"
                 result3_line = self._format_terminal_line(result3, terminal_width)
                 self._draw_terminal_text(result3_line, 0, i, COLORS['title'])
-            elif i == 16:
+            elif i == 15:
                 empty = self._format_terminal_line("", terminal_width)
                 self._draw_terminal_text(empty, 0, i, border_color)
-            elif i == 17:
+            elif i == 16:
                 separator = "╠" + "─" * (terminal_width - 2) + "╣"
                 self._draw_terminal_text(separator, 0, i, border_color)
-            elif i == 18:
+            elif i == 17:
                 inst_header = f"AVAILABLE COMMANDS:"
                 inst_line = self._format_terminal_line(inst_header, terminal_width)
                 self._draw_terminal_text(inst_line, 0, i, COLORS['hint'])
-            elif i == 19:
+            elif i == 18:
                 inst1 = f"• ENTER : Return to main menu"
                 inst1_line = self._format_terminal_line(inst1, terminal_width)
                 self._draw_terminal_text(inst1_line, 0, i, COLORS['hint'])
-            elif i == 20:
+            elif i == 19:
                 inst2 = f"• ESC : Quit BBS"
                 inst2_line = self._format_terminal_line(inst2, terminal_width)
                 self._draw_terminal_text(inst2_line, 0, i, COLORS['hint'])
-            elif i == 21:
+            elif i == 20:
                 footer = f"THANK YOU FOR USING MORSE CODE BBS!"
                 footer_line = self._format_terminal_line(footer, terminal_width)
                 self._draw_terminal_text(footer_line, 0, i, border_color)
