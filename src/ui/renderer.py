@@ -510,7 +510,7 @@ class UIRenderer:
         self._draw_terminal_text(top_border, 0, 0, border_color)
         
         # Content
-        for i in range(1, terminal_height - 1):
+        for i in range(1, terminal_height - 2):
             if i == 1:
                 header_content = "PRACTICE MODE - MORSE TRAINING"
                 header = self._format_terminal_line(header_content, terminal_width)
@@ -669,8 +669,8 @@ class UIRenderer:
                 inst_line = self._format_terminal_line(inst_content, terminal_width)
                 self._draw_terminal_text(inst_line, 0, i, COLORS['hint'])
             elif i == terminal_height - 3:
-                separator = "╠" + "═" * (terminal_width - 2) + "╣"
-                self._draw_terminal_text(separator, 0, i, border_color)
+                # Skip this line - status bar top border is drawn here
+                continue
             else:
                 empty = self._format_terminal_line("", terminal_width)
                 self._draw_terminal_text(empty, 0, i, border_color)
@@ -693,7 +693,7 @@ class UIRenderer:
         self._draw_terminal_text(top_border, 0, 0, border_color)
         
         # Content
-        for i in range(1, terminal_height - 1):
+        for i in range(1, terminal_height - 2):
             if i == 1:
                 header_content = "MORSE CODE TERMINAL v1.0 - ESTABLISHED CONNECTION"
                 header = self._format_terminal_line(header_content, terminal_width)
@@ -849,21 +849,9 @@ class UIRenderer:
             elif i == 22:
                 separator = "╠" + "─" * (terminal_width - 2) + "╣"
                 self._draw_terminal_text(separator, 0, i, border_color)
-            elif i == 23:
-                inst_header_content = "AVAILABLE COMMANDS:"
-                inst_header = self._format_terminal_line(inst_header_content, terminal_width)
-                self._draw_terminal_text(inst_header, 0, i, COLORS['title'])
-            elif i == 24:
-                inst_content = "• ENTER : Select option"
-                inst_line = self._format_terminal_line(inst_content, terminal_width)
-                self._draw_terminal_text(inst_line, 0, i, COLORS['hint'])
-            elif i == 25:
-                inst_content = "• ESC : Quit game"
-                inst_line = self._format_terminal_line(inst_content, terminal_width)
-                self._draw_terminal_text(inst_line, 0, i, COLORS['hint'])
             elif i == terminal_height - 2:
-                separator = "╠" + "═" * (terminal_width - 2) + "╣"
-                self._draw_terminal_text(separator, 0, i, border_color)
+                # Skip this line - status bar is drawn here
+                continue
             else:
                 # BBS system information area - moved up to avoid conflict with status bar
                 if i == terminal_height - 7:
@@ -1277,7 +1265,7 @@ class UIRenderer:
         formatted_status = self._format_terminal_line(status_content, terminal_width)
         
         # Draw status bar with distinctive background color (red like in the image)
-        status_y = terminal_height - 3  # Position to leave room for bottom border
+        status_y = terminal_height - 2  # Position at the very bottom
         
         # Create background for status bar
         char_width, char_height = self.terminal_font.size("X")
@@ -1302,7 +1290,9 @@ class UIRenderer:
         top_border = "╠" + "═" * (terminal_width - 2) + "╣"
         self._draw_terminal_text(top_border, 0, status_y - 1, (100, 255, 100))  # Green border
         
-        # Don't draw bottom border here - let the terminal frame handle it
+        # Draw bottom border below status bar to close the terminal frame
+        bottom_border = "╚" + "═" * (terminal_width - 2) + "╝"
+        self._draw_terminal_text(bottom_border, 0, status_y + 1, (100, 255, 100))  # Green border
         
         # Add subtle flicker effect to simulate real BBS terminal
         if random.random() < 0.01:  # 1% chance of flicker
@@ -1327,7 +1317,7 @@ class UIRenderer:
         self._draw_terminal_text(top_border, 0, 0, border_color)
         
         # Content
-        for i in range(1, terminal_height - 1):
+        for i in range(1, terminal_height - 2):
             if i == 1:
                 header_content = "DIFFICULTY SELECTION - CHOOSE YOUR CHALLENGE"
                 header = self._format_terminal_line(header_content, terminal_width)
@@ -1345,11 +1335,9 @@ class UIRenderer:
             elif 5 <= i <= 9:
                 # ASCII art for difficulty
                 difficulty_art = [
-                    r"  _____ _   _ _   _    _    _   _  ____ _____ ____  _____   ",
-                    r" |  ___| | | | \ | |  / \  | \ | |/ ___| ____|  _ \| ____|  ",
-                    r" | |_  | | | |  \| | / _ \ |  \| | |   |  _| | |_) |  _|   ",
-                    r" |  _| | |_| | |\  |/ ___ \| |\  | |___| |___|  _ <| |___  ",
-                    r" |_|    \___/|_| \_/_/   \_\_| \_|\____|_____|_| \_\_____|  "
+                    r"║  ___       __          __   __                __   __  __ ",
+                    r"║ |__   /\  /__` \ /    /  \ |__)    |__|  /\  |__) |  \  _|",
+                    r"║ |___ /~~\ .__/  |     \__/ |  \    |  | /~~\ |  \ |__/  . "
                 ]
                 line_index = i - 5
                 if line_index < len(difficulty_art):
@@ -1520,8 +1508,8 @@ class UIRenderer:
                 inst3_line = self._format_terminal_line(inst3_content, terminal_width)
                 self._draw_terminal_text(inst3_line, 0, i, COLORS['hint'])
             elif i == terminal_height - 2:
-                separator = "╠" + "═" * (terminal_width - 2) + "╣"
-                self._draw_terminal_text(separator, 0, i, border_color)
+                # Skip this line - status bar is drawn here
+                continue
             else:
                 empty = "║" + " " * (terminal_width - 2) + "║"
                 self._draw_terminal_text(empty, 0, i, border_color)
@@ -1544,7 +1532,7 @@ class UIRenderer:
         self._draw_terminal_text(top_border, 0, 0, border_color)
         
         # Content
-        for i in range(1, terminal_height - 1):
+        for i in range(1, terminal_height - 2):
             if i == 1:
                 header = f"USER REGISTRATION - CREATE YOUR CALLSIGN"
                 header_line = self._format_terminal_line(header, terminal_width)
@@ -1559,52 +1547,70 @@ class UIRenderer:
             elif i == 4:
                 empty = self._format_terminal_line("", terminal_width)
                 self._draw_terminal_text(empty, 0, i, border_color)
-            elif 5 <= i <= 9:
-                # ASCII art for user/login
+            elif 5 <= i <= 12:
+                # ASCII art for operator ID card with custom colors
                 login_art = [
-                    r"    _    _   _   ____  _____ ____     ____    _    _     _   _____  ",
-                    r"   / \  | \ | | / ___|| ____|  _ \   | __ )  / \  | |   | | | ____| ",
-                    r"  / _ \ |  \| || |    |  _| | |_) |  |  _ \ / _ \ | |   | | |  _|  ",
-                    r" / ___ \| |\  || |___ | |___|  _ <   | |_) / ___ \| |___| | | |___ ",
-                    r"/_/   \_\_| \_| \____||_____|_| \_\  |____/_/   \_\_____|_|_|_____| "
+                    r"_________________________________________",
+                    r"| OPERATOR ID CARD          [ LINKMEETUP ]|",
+                    r"|  _______  NAME: ______________________  |",
+                    r"| |       |                               |",
+                    r"| |  O-O  | CODE: NSK-2026-X              |",
+                    r"| |  \_/  | STATUS: UNREGISTERED          |",
+                    r"| |_______| [ SCANNING BIOMETRICS... ]    |",
+                    r"|_________________________________________|"
                 ]
                 line_index = i - 5
                 if line_index < len(login_art):
-                    if random.random() < 0.05:  # Flicker effect
-                        art_line = self._format_terminal_line(login_art[line_index], terminal_width)
-                        self._draw_terminal_text(art_line, 0, i, (50, 150, 50))
+                    # Custom color scheme for each line
+                    if line_index == 0 or line_index == 8:  # Top and bottom borders
+                        card_color = (150, 255, 150)  # Light green borders
+                    elif line_index == 1:  # Title line
+                        card_color = (200, 255, 200)  # Bright green title
+                    elif line_index == 2:  # NAME line
+                        card_color = (180, 255, 180)  # Medium green
+                    elif line_index == 3:  # Empty face line
+                        card_color = (160, 255, 160)  # Soft green
+                    elif line_index == 4:  # CODE line
+                        card_color = (170, 255, 170)  # Standard green
+                    elif line_index == 5:  # STATUS line
+                        card_color = (220, 255, 220)  # Very light green
+                    elif line_index == 6:  # Biometrics line
+                        card_color = (140, 255, 140)  # Darker green
                     else:
-                        art_line = self._format_terminal_line(login_art[line_index], terminal_width)
-                        self._draw_terminal_text(art_line, 0, i, COLORS['title'])
+                        card_color = COLORS['title']  # Fallback
+                    
+                    # Add very subtle animated color shifting
+                    if random.random() < 0.02:  # 2% chance for color shift (reduced from 10%)
+                        shift = random.randint(-10, 10)  # Smaller shift range
+                        card_color = tuple(max(0, min(255, c + shift)) for c in card_color)
+                    
+                    art_line = self._format_terminal_line(login_art[line_index], terminal_width)
+                    self._draw_terminal_text(art_line, 0, i, card_color)
                 else:
                     empty = self._format_terminal_line("", terminal_width)
                     self._draw_terminal_text(empty, 0, i, border_color)
-            elif i == 10:
+            elif i == 13:
                 separator = "╠" + "─" * (terminal_width - 2) + "╣"
                 self._draw_terminal_text(separator, 0, i, border_color)
-            elif i == 11:
+            elif i == 14:
                 rules_header = f"SYSTEM RULES:"
                 rules_line = self._format_terminal_line(rules_header, terminal_width)
                 self._draw_terminal_text(rules_line, 0, i, COLORS['title'])
-            elif i == 12:
+            elif i == 15:
                 rule1 = f"• UNIQUE CALLSIGN: Each operator may register only once"
                 rule1_line = self._format_terminal_line(rule1, terminal_width)
                 self._draw_terminal_text(rule1_line, 0, i, COLORS['hint'])
-            elif i == 13:
-                rule2 = f"• UNLIMITED ATTEMPTS: no limit on transmission attempts — just use a new callsign"
-                rule2_line = self._format_terminal_line(rule2, terminal_width)
-                self._draw_terminal_text(rule2_line, 0, i, COLORS['hint'])
-            elif i == 14:
-                separator = "╠" + "─" * (terminal_width - 2) + "╣"
-                self._draw_terminal_text(separator, 0, i, border_color)
-            elif i == 15:
-                input_header = f"ENTER YOUR CALLSIGN (MAX 15 CHARACTERS)"
-                input_line = self._format_terminal_line(input_header, terminal_width)
-                self._draw_terminal_text(input_line, 0, i, COLORS['text'])
             elif i == 16:
                 separator = "╠" + "─" * (terminal_width - 2) + "╣"
                 self._draw_terminal_text(separator, 0, i, border_color)
             elif i == 17:
+                input_header = f"ENTER YOUR CALLSIGN (MAX 15 CHARACTERS)"
+                input_line = self._format_terminal_line(input_header, terminal_width)
+                self._draw_terminal_text(input_line, 0, i, COLORS['text'])
+            elif i == 18:
+                separator = "╠" + "─" * (terminal_width - 2) + "╣"
+                self._draw_terminal_text(separator, 0, i, border_color)
+            elif i == 19:
                 # Enhanced input field with unified color palette and pulsing cursor effects
                 input_text = state_manager.nickname_input
                 
@@ -1664,24 +1670,25 @@ class UIRenderer:
                         text_color = (200, 255, 255)  # Cyan
                 
                 self._draw_terminal_text(input_display, 0, i, text_color)
-            elif i == 18:
+            elif i == 17:
                 empty = self._format_terminal_line("", terminal_width)
                 self._draw_terminal_text(empty, 0, i, border_color)
-            elif i == 19:
+            elif i == 18:
                 separator = "╠" + "─" * (terminal_width - 2) + "╣"
                 self._draw_terminal_text(separator, 0, i, border_color)
-            elif i == 20 and state_manager.nickname_error:
-                # Show error message if nickname is taken
-                error_msg = "ERROR: CALLSIGN ALREADY REGISTERED - CHOOSE DIFFERENT CALLSIGN"
-                error_line = self._format_terminal_line(error_msg, terminal_width)
-                # Make error message blink/flicker
-                if int(time.time() * 4) % 2 == 0:
-                    self._draw_terminal_text(error_line, 0, i, COLORS['wrong'])
+            elif i == 20:
+                if state_manager.nickname_error:
+                    # Show error message if nickname is taken
+                    error_msg = "ERROR: CALLSIGN ALREADY REGISTERED - CHOOSE DIFFERENT CALLSIGN"
+                    error_line = self._format_terminal_line(error_msg, terminal_width)
+                    # Make error message blink/flicker
+                    if int(time.time() * 4) % 2 == 0:
+                        self._draw_terminal_text(error_line, 0, i, COLORS['wrong'])
+                    else:
+                        self._draw_terminal_text(error_line, 0, i, (150, 50, 50))
                 else:
-                    self._draw_terminal_text(error_line, 0, i, (150, 50, 50))
-            elif i == 20 and not state_manager.nickname_error:
-                empty = self._format_terminal_line("", terminal_width)
-                self._draw_terminal_text(empty, 0, i, border_color)
+                    empty = self._format_terminal_line("", terminal_width)
+                    self._draw_terminal_text(empty, 0, i, border_color)
             elif i == 21:
                 separator = "╠" + "─" * (terminal_width - 2) + "╣"
                 self._draw_terminal_text(separator, 0, i, border_color)
@@ -1713,8 +1720,8 @@ class UIRenderer:
                 footer_line = self._format_terminal_line(footer, terminal_width)
                 self._draw_terminal_text(footer_line, 0, i, border_color)
             elif i == terminal_height - 2:
-                separator = "╠" + "═" * (terminal_width - 2) + "╣"
-                self._draw_terminal_text(separator, 0, i, border_color)
+                # Skip this line - status bar is drawn here
+                continue
             else:
                 empty = "║" + " " * (terminal_width - 2) + "║"
                 self._draw_terminal_text(empty, 0, i, border_color)
@@ -1742,7 +1749,7 @@ class UIRenderer:
         word_time_remaining = state_manager.get_word_time_remaining()
         
         # Content
-        for i in range(1, terminal_height - 1):
+        for i in range(1, terminal_height - 2):
             if i == 1:
                 header = f"║ MORSE CODE TRANSMISSION - ACTIVE SESSION{' ' * (terminal_width - 45)} ║"
                 self._draw_terminal_text(header, 0, i, COLORS['title'])
@@ -1827,7 +1834,9 @@ class UIRenderer:
                 
                 # Create enhanced timer display
                 timer_display = f"{timer_indicator} WORD TIMER: {word_time_remaining:.1f}s {timer_indicator} {timer_status}"
-                timer_line = self._format_terminal_line(timer_display, terminal_width)
+                
+                # Build timer line with left alignment (like player status)
+                timer_line = f"║ {timer_display}{' ' * (terminal_width - len(timer_display) - 4)} ║"
                 
                 # Add pulsing effect for critical word time
                 if word_time_remaining <= 2:
@@ -1841,8 +1850,8 @@ class UIRenderer:
                     offset_x, offset_y = self._get_terminal_offset()
                     char_width, char_height = self.terminal_font.size("X")
                     
-                    # Calculate position to center the timer text
-                    timer_x = (terminal_width - len(timer_display)) // 2
+                    # Position timer at left edge (after border)
+                    timer_x = 2  # Start after "║ "
                     self.screen.blit(timer_surface, (offset_x + timer_x * char_width, offset_y + i * char_height))
                 else:
                     self._draw_terminal_text(timer_line, 0, i, timer_color)
@@ -1965,8 +1974,8 @@ class UIRenderer:
                 inst3_line = self._format_terminal_line(inst3, terminal_width)
                 self._draw_terminal_text(inst3_line, 0, i, COLORS['hint'])
             elif i == terminal_height - 2:
-                separator = "╠" + "═" * (terminal_width - 2) + "╣"
-                self._draw_terminal_text(separator, 0, i, border_color)
+                # Skip this line - status bar is drawn here
+                continue
             else:
                 empty = "║" + " " * (terminal_width - 2) + "║"
                 self._draw_terminal_text(empty, 0, i, border_color)
@@ -2102,7 +2111,7 @@ class UIRenderer:
         self._draw_terminal_text(top_border, 0, 0, border_color)
         
         # Content
-        for i in range(1, terminal_height - 1):
+        for i in range(1, terminal_height - 2):
             if i == 1:
                 header = f"TRANSMISSION COMPLETE - SESSION TERMINATED"
                 header_line = self._format_terminal_line(header, terminal_width)
@@ -2182,8 +2191,8 @@ class UIRenderer:
                 footer_line = self._format_terminal_line(footer, terminal_width)
                 self._draw_terminal_text(footer_line, 0, i, border_color)
             elif i == terminal_height - 2:
-                separator = "╠" + "═" * (terminal_width - 2) + "╣"
-                self._draw_terminal_text(separator, 0, i, border_color)
+                # Skip this line - status bar is drawn here
+                continue
             else:
                 empty = "║" + " " * (terminal_width - 2) + "║"
                 self._draw_terminal_text(empty, 0, i, border_color)
@@ -2208,7 +2217,7 @@ class UIRenderer:
         self._draw_terminal_text(top_border, 0, 0, border_color)
         
         # Content
-        for i in range(1, terminal_height - 1):
+        for i in range(1, terminal_height - 2):
             if i == 1:
                 header_content = f"OPERATORS LOG - {state_manager.high_score_difficulty.upper()} MODE"
                 header = self._format_terminal_line(header_content, terminal_width)
@@ -2223,14 +2232,15 @@ class UIRenderer:
             elif i == 4:
                 empty = self._format_terminal_line("", terminal_width)
                 self._draw_terminal_text(empty, 0, i, border_color)
-            elif 5 <= i <= 9:
+            elif 5 <= i <= 10:
                 # ASCII art for operators log
                 scores_art = [
-                    r"  ____  ____  _____ ____  _____   ____  ____  ____  ____ _____  ",
-                    r" |  _ \|  _ \|_   _|  _ \| ____| | __ )|  _ \|  _ \|  _ |_   _| ",
-                    r" | |_) | |_) | | | | |_) |  _|    |  _ \| |_) | | | | |_) | | |   ",
-                    r" |  _ <|  __/  | | |  _ <| |___   | |_) |  __/| |_| |  _ <| | |   ",
-                    r" |_| \_\_|     |_| |_| \\_\\____| |____/|_|   |____/|_| \\_\\_|  "
+                    r"   ___                                       _          ",
+                    r"  | _ \    ___     __      ___      _ _   __| |    ___  ",
+                    r"  |   /   / -_)   / _|    / _ \    | '_| / _` |   (_-< ",
+                    r"  |_|_\   \___|   \__|_   \___/   _|_|_  \__,_|   /__/_",
+                    r'|"""""|_|"""""|_|"""""|_|"""""|_|"""""|_|"""""|_|"""""|',
+                    r"`-0-0-'  `-0-0-' `-0-0-' `-0-0-' `-0-0-' `-0-0-' `-0-0-'"
                 ]
                 line_index = i - 5
                 if line_index < len(scores_art):
@@ -2247,19 +2257,19 @@ class UIRenderer:
                 else:
                     empty = self._format_terminal_line("", terminal_width)
                     self._draw_terminal_text(empty, 0, i, border_color)
-            elif i == 10:
+            elif i == 11:
                 separator = "╠" + "─" * (terminal_width - 2) + "╣"
                 self._draw_terminal_text(separator, 0, i, border_color)
-            elif i == 11:
+            elif i == 12:
                 scores_header_content = "RANK  OPERATOR        SCORE    ERRORS  ACCURACY"
                 scores_header = self._format_terminal_line(scores_header_content, terminal_width)
                 self._draw_terminal_text(scores_header, 0, i, COLORS['title'])
-            elif i == 12:
+            elif i == 13:
                 separator = "╠" + "─" * (terminal_width - 2) + "╣"
                 self._draw_terminal_text(separator, 0, i, border_color)
-            elif 13 <= i <= 20:
+            elif 14 <= i <= 21:
                 # High scores list
-                score_index = i - 13
+                score_index = i - 14
                 high_scores = HighScoreManager()
                 scores = high_scores.get_top_scores(state_manager.high_score_difficulty, limit=8)
                 
@@ -2303,25 +2313,25 @@ class UIRenderer:
                 else:
                     empty = self._format_terminal_line("", terminal_width)
                     self._draw_terminal_text(empty, 0, i, border_color)
-            elif i == 21:
+            elif i == 22:
                 separator = "╠" + "─" * (terminal_width - 2) + "╣"
                 self._draw_terminal_text(separator, 0, i, border_color)
-            elif i == 22:
+            elif i == 23:
                 inst_header_content = "AVAILABLE COMMANDS:"
                 inst_header = self._format_terminal_line(inst_header_content, terminal_width)
                 # Add subtle flicker to commands header
                 self._draw_terminal_text(inst_header, 0, i, COLORS['title'])
-            elif i == 23:
+            elif i == 24:
                 inst1_content = "• TAB : Switch difficulty"
                 inst1_line = self._format_terminal_line(inst1_content, terminal_width)
                 self._draw_terminal_text(inst1_line, 0, i, COLORS['hint'])
-            elif i == 24:
+            elif i == 25:
                 inst2_content = "• ESC : Main menu"
                 inst2_line = self._format_terminal_line(inst2_content, terminal_width)
                 self._draw_terminal_text(inst2_line, 0, i, COLORS['hint'])
             elif i == terminal_height - 2:
-                separator = "╠" + "═" * (terminal_width - 2) + "╣"
-                self._draw_terminal_text(separator, 0, i, border_color)
+                # Skip this line - status bar is drawn here
+                continue
             else:
                 empty = "║" + " " * (terminal_width - 2) + "║"
                 self._draw_terminal_text(empty, 0, i, border_color)
@@ -2344,7 +2354,7 @@ class UIRenderer:
         self._draw_terminal_text(top_border, 0, 0, border_color)
         
         # Content
-        for i in range(1, terminal_height - 1):
+        for i in range(1, terminal_height - 2):
             if i == 1:
                 header_content = "NUMBERED MENU - SELECT OPTION"
                 header = self._format_terminal_line(header_content, terminal_width)
@@ -2490,15 +2500,14 @@ class UIRenderer:
                 inst_line = self._format_terminal_line(inst_content, terminal_width)
                 self._draw_terminal_text(inst_line, 0, i, COLORS['hint'])
             elif i == terminal_height - 2:
-                separator = "╠" + "═" * (terminal_width - 2) + "╣"
-                self._draw_terminal_text(separator, 0, i, border_color)
+                # Skip this line - status bar is drawn here
+                continue
             else:
                 empty = "║" + " " * (terminal_width - 2) + "║"
                 self._draw_terminal_text(empty, 0, i, border_color)
         
-        # Bottom border
-        bottom_border = "╚" + "═" * (terminal_width - 2) + "╝"
-        self._draw_terminal_text(bottom_border, 0, terminal_height - 1, border_color)
+        # Draw status bar (provides the bottom border)
+        self._draw_status_bar(state_manager)
     
     def draw_text(self, text: str, x: int, y: int, color: tuple, 
                   font=None, max_width: int = None) -> int:
