@@ -298,12 +298,14 @@ class GameController:
         settings = self.state_manager.get_difficulty_settings()
         
         if self.state_manager.game_data.difficulty == 'hard':
-            # Hard mode: bonus every 3 consecutive correct words without errors
-            bonus_every = 3  # Fixed to 3 consecutive words
+            # Hard mode: bonus every N consecutive correct words without errors (unlimited)
+            streak_every = settings.get('streak_bonus_every_words', 3)  # Default to 3 consecutive words
             bonus_amount = settings.get('time_bonus_amount', 0)
+            unlimited_bonuses = settings.get('unlimited_bonuses', False)
             
             if bonus_amount > 0:
-                if self.state_manager.game_data.streak_count > 0 and self.state_manager.game_data.streak_count % bonus_every == 0:
+                # Check if player qualifies for bonus (every N consecutive correct words)
+                if self.state_manager.game_data.streak_count > 0 and self.state_manager.game_data.streak_count % streak_every == 0:
                     # Add bonus time
                     old_time = self.state_manager.game_data.time_remaining
                     self.state_manager.game_data.time_remaining += bonus_amount
@@ -314,12 +316,14 @@ class GameController:
                     print(f"Time before: {old_time:.1f}s, Time after: {self.state_manager.game_data.time_remaining:.1f}s")
         
         elif self.state_manager.game_data.difficulty == 'easy':
-            # Easy mode: streak bonus
+            # Easy mode: streak bonus with unlimited earning potential
             streak_every = settings.get('streak_bonus_every_words', 0)
             streak_amount = settings.get('streak_bonus_amount', 0)
+            unlimited_bonuses = settings.get('unlimited_bonuses', False)
             
             if streak_every > 0 and streak_amount > 0:
-                if self.state_manager.game_data.streak_count == streak_every:
+                # Check if player qualifies for bonus (every N words without errors)
+                if self.state_manager.game_data.streak_count > 0 and self.state_manager.game_data.streak_count % streak_every == 0:
                     # Add streak bonus time
                     old_time = self.state_manager.game_data.time_remaining
                     self.state_manager.game_data.time_remaining += streak_amount

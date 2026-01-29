@@ -269,31 +269,105 @@ class UIRenderer:
         
         return glow_surface
 
-    def _create_bonus_time_overlay(self, bonus_amount: int, intensity: float = 1.0) -> pygame.Surface:
-        """Create transparent overlay with bonus time text."""
-        # Create a surface for the overlay
-        overlay = pygame.Surface((400, 150), pygame.SRCALPHA)
+    def _create_time_warning_overlay(self, time_remaining: float, intensity: float = 1.0) -> pygame.Surface:
+        """Create prominent terminal-style time warning overlay."""
+        # Create surface for the warning overlay - much larger
+        overlay_width = 600
+        overlay_height = 120
+        overlay = pygame.Surface((overlay_width, overlay_height), pygame.SRCALPHA)
         
-        # Semi-transparent background
-        bg_alpha = int(180 * intensity)
-        pygame.draw.rect(overlay, (255, 215, 0, bg_alpha), (0, 0, 400, 150))
-        pygame.draw.rect(overlay, (255, 255, 255, bg_alpha // 2), (2, 2, 396, 146), 3)
+        # Add solid background for maximum visibility
+        bg_alpha = int(220 * intensity)  # Much more opaque
+        bg_color = (*COLORS['background'], bg_alpha)
+        pygame.draw.rect(overlay, bg_color, (0, 0, overlay_width, overlay_height))
+        
+        # Add bright border for attention
+        border_width = 3
+        if time_remaining <= 5:
+            border_color = tuple(int(c * intensity) for c in COLORS['wrong'])  # Red for critical
+            text_color = tuple(int(c * intensity) for c in COLORS['wrong'])
+            warning_text_line1 = "*** TIME CRITICAL ***"
+            warning_text_line2 = f"{int(time_remaining)} SECONDS LEFT!"
+        else:
+            border_color = tuple(int(c * intensity) for c in COLORS['neon_glow_orange'])  # Orange for urgent
+            text_color = tuple(int(c * intensity) for c in COLORS['neon_glow_orange'])
+            warning_text_line1 = "** TIME RUNNING LOW **"
+            warning_text_line2 = f"{int(time_remaining)} SECONDS REMAINING"
+        
+        # Draw thick terminal-style border
+        pygame.draw.rect(overlay, border_color, (0, 0, overlay_width, overlay_height), border_width)
+        
+        # Draw inner border for emphasis
+        inner_border_color = tuple(int(c * 0.7 * intensity) for c in border_color)
+        pygame.draw.rect(overlay, inner_border_color, (5, 5, overlay_width - 10, overlay_height - 10), 1)
+        
+        # Use large bold font
+        try:
+            font_large = pygame.font.Font(None, 42)  # Large font for main text
+            font_small = pygame.font.Font(None, 32)  # Smaller font for secondary text
+        except:
+            font_large = self.title_font
+            font_small = self.title_font
+        
+        # Render warning text
+        line1_surface = font_large.render(warning_text_line1, True, text_color)
+        line2_surface = font_small.render(warning_text_line2, True, text_color)
+        
+        # Center the text
+        line1_rect = line1_surface.get_rect(center=(overlay_width // 2, 40))
+        line2_rect = line2_surface.get_rect(center=(overlay_width // 2, 80))
+        
+        overlay.blit(line1_surface, line1_rect)
+        overlay.blit(line2_surface, line2_rect)
+        
+        return overlay
+
+    def _create_bonus_time_overlay(self, bonus_amount: int, intensity: float = 1.0) -> pygame.Surface:
+        """Create prominent terminal-style bonus time overlay."""
+        # Create surface for the overlay - much larger
+        overlay_width = 500
+        overlay_height = 100
+        overlay = pygame.Surface((overlay_width, overlay_height), pygame.SRCALPHA)
+        
+        # Add solid background for maximum visibility
+        bg_alpha = int(220 * intensity)  # Much more opaque
+        bg_color = (*COLORS['background'], bg_alpha)
+        pygame.draw.rect(overlay, bg_color, (0, 0, overlay_width, overlay_height))
+        
+        # Use bright colors for bonus
+        border_color = tuple(int(c * intensity) for c in COLORS['correct'])  # Green for bonus
+        text_color = tuple(int(c * intensity) for c in COLORS['correct'])
+        
+        # Add bright border for attention
+        border_width = 3
+        pygame.draw.rect(overlay, border_color, (0, 0, overlay_width, overlay_height), border_width)
+        
+        # Add inner border for emphasis
+        inner_border_color = tuple(int(c * 0.7 * intensity) for c in border_color)
+        pygame.draw.rect(overlay, inner_border_color, (5, 5, overlay_width - 10, overlay_height - 10), 1)
         
         # Create bonus text
-        bonus_text = f"+{bonus_amount} сек."
+        bonus_text_line1 = "+++ TIME BONUS +++"
+        bonus_text_line2 = f"+{bonus_amount} SECONDS"
         
-        # Use large font for the bonus text
+        # Use large bold font
         try:
-            font = pygame.font.Font(None, 72)
+            font_large = pygame.font.Font(None, 42)  # Large font for main text
+            font_small = pygame.font.Font(None, 32)  # Smaller font for secondary text
         except:
-            font = self.title_font
+            font_large = self.title_font
+            font_small = self.title_font
         
-        # Render text with golden glow effect
-        text_surface = font.render(bonus_text, True, (255, 255, 255))
+        # Render bonus text
+        line1_surface = font_large.render(bonus_text_line1, True, text_color)
+        line2_surface = font_small.render(bonus_text_line2, True, text_color)
         
-        # Center the text on the overlay
-        text_rect = text_surface.get_rect(center=(200, 75))
-        overlay.blit(text_surface, text_rect)
+        # Center the text
+        line1_rect = line1_surface.get_rect(center=(overlay_width // 2, 35))
+        line2_rect = line2_surface.get_rect(center=(overlay_width // 2, 70))
+        
+        overlay.blit(line1_surface, line1_rect)
+        overlay.blit(line2_surface, line2_rect)
         
         return overlay
 
@@ -395,14 +469,29 @@ class UIRenderer:
                     
                     # Apply bonus time overlay in center
                     bonus_overlay = self._create_bonus_time_overlay(state_manager.game_data.bonus_amount, intensity)
-                    # Center the overlay on screen
+                    # Position above time warning but still below main interface
                     overlay_x = (target_surface.get_width() - bonus_overlay.get_width()) // 2
-                    overlay_y = (target_surface.get_height() - bonus_overlay.get_height()) // 2
+                    overlay_y = target_surface.get_height() - bonus_overlay.get_height() - 140  # Position above time warning
                     target_surface.blit(bonus_overlay, (overlay_x, overlay_y))
             else:
                 # Clear bonus time after effect duration
                 state_manager.game_data.bonus_time_received = None
                 state_manager.game_data.bonus_amount = 0
+        
+        # Apply time warning overlay for critically low time
+        if state_manager.current_state == GameState.PLAYING:
+            time_remaining = state_manager.game_data.time_remaining
+            if time_remaining <= 10:  # Show warning when 10 seconds or less
+                # Calculate smooth pulsing intensity
+                pulse = (int(current_time * 3) % 20) / 20.0  # Slower, smoother pulsing
+                intensity = 0.6 + (0.4 * pulse)  # Vary between 0.6 and 1.0
+                
+                # Create and display time warning overlay
+                warning_overlay = self._create_time_warning_overlay(time_remaining, intensity)
+                # Position at same level as bonus overlay
+                overlay_x = (target_surface.get_width() - warning_overlay.get_width()) // 2
+                overlay_y = target_surface.get_height() - warning_overlay.get_height() - 140  # Same level as bonus
+                target_surface.blit(warning_overlay, (overlay_x, overlay_y))
     
     def _draw_practice_screen(self, state_manager: GameStateManager, morse_sequence: str, current_time: float):
         """Draw practice mode screen with single letter training and Morse alphabet reference."""
@@ -586,12 +675,8 @@ class UIRenderer:
                 empty = self._format_terminal_line("", terminal_width)
                 self._draw_terminal_text(empty, 0, i, border_color)
         
-        # Draw BBS-style status bar before bottom border
+        # Draw status bar (provides the bottom border)
         self._draw_status_bar(state_manager)
-        
-        # Bottom border (now above status bar)
-        bottom_border = "╚" + "═" * (terminal_width - 2) + "╝"
-        self._draw_terminal_text(bottom_border, 0, terminal_height - 3, border_color)
 
     def _draw_main_menu(self, state_manager: GameStateManager):
         """Draw main menu screen with retro terminal/BBS style."""
@@ -780,13 +865,13 @@ class UIRenderer:
                 separator = "╠" + "═" * (terminal_width - 2) + "╣"
                 self._draw_terminal_text(separator, 0, i, border_color)
             else:
-                # BBS system information area - moved to bottom
-                if i == terminal_height - 6:
+                # BBS system information area - moved up to avoid conflict with status bar
+                if i == terminal_height - 7:
                     bbs_header = "SYSTEM INFORMATION:"
                     bbs_line = self._format_terminal_line(bbs_header, terminal_width)
                     # Add subtle flicker to header
                     self._draw_terminal_text(bbs_line, 0, i, COLORS['title'])
-                elif i == terminal_height - 5:
+                elif i == terminal_height - 6:
                     sys_info = "BBS VERSION: 1.0  NODE: 1  LINES: 1  USERS: 1"
                     sys_line = self._format_terminal_line(sys_info, terminal_width)
                     # Add data corruption effect occasionally
@@ -800,11 +885,11 @@ class UIRenderer:
                         sys_info = "".join(corrupted_chars)
                         info_color = (255, 100, 100)  # Red for corruption
                     self._draw_terminal_text(self._format_terminal_line(sys_info, terminal_width), 0, i, info_color)
-                elif i == terminal_height - 4:
+                elif i == terminal_height - 5:
                     sys_info2 = "OS: CP/M 2.2  MEMORY: 64KB  STORAGE: 5MB"
                     sys_line2 = self._format_terminal_line(sys_info2, terminal_width)
                     self._draw_terminal_text(sys_line2, 0, i, COLORS['text'])
-                elif i == terminal_height - 3:
+                elif i == terminal_height - 4:
                     # Skip MODEM line - removed as it's now in status bar
                     empty = self._format_terminal_line("", terminal_width)
                     self._draw_terminal_text(empty, 0, i, border_color)
@@ -818,12 +903,8 @@ class UIRenderer:
                     empty = self._format_terminal_line("", terminal_width)
                     self._draw_terminal_text(empty, 0, i, border_color)
         
-        # Draw BBS-style status bar before bottom border
+        # Draw status bar (provides the bottom border)
         self._draw_status_bar(state_manager)
-        
-        # Bottom border (now above status bar)
-        bottom_border = "╚" + "═" * (terminal_width - 2) + "╝"
-        self._draw_terminal_text(bottom_border, 0, terminal_height - 3, border_color)
 
     def _draw_enhanced_word(self, state_manager: GameStateManager, terminal_line: int):
         """Draw the current word with large font, centering, and scanning effect."""
@@ -1196,7 +1277,7 @@ class UIRenderer:
         formatted_status = self._format_terminal_line(status_content, terminal_width)
         
         # Draw status bar with distinctive background color (red like in the image)
-        status_y = terminal_height - 2  # Position inside the green rectangle
+        status_y = terminal_height - 3  # Position to leave room for bottom border
         
         # Create background for status bar
         char_width, char_height = self.terminal_font.size("X")
@@ -1221,9 +1302,7 @@ class UIRenderer:
         top_border = "╠" + "═" * (terminal_width - 2) + "╣"
         self._draw_terminal_text(top_border, 0, status_y - 1, (100, 255, 100))  # Green border
         
-        # Bottom border of status bar (before terminal bottom border)
-        bottom_border = "╠" + "═" * (terminal_width - 2) + "╣"
-        self._draw_terminal_text(bottom_border, 0, status_y + 1, (100, 255, 100))  # Green border
+        # Don't draw bottom border here - let the terminal frame handle it
         
         # Add subtle flicker effect to simulate real BBS terminal
         if random.random() < 0.01:  # 1% chance of flicker
@@ -1281,7 +1360,7 @@ class UIRenderer:
                 separator = "╠" + "─" * (terminal_width - 2) + "╣"
                 self._draw_terminal_text(separator, 0, i, border_color)
             elif i == 11:
-                menu_header_content = "AVAILABLE MODES"
+                menu_header_content = "MODES:"
                 menu_header = self._format_terminal_line(menu_header_content, terminal_width)
                 self._draw_terminal_text_bold(menu_header, 0, i, COLORS['menu_header'])
             elif 12 <= i <= 15:
@@ -1364,7 +1443,7 @@ class UIRenderer:
                 separator = "╠" + "─" * (terminal_width - 2) + "╣"
                 self._draw_terminal_text(separator, 0, i, border_color)
             elif i == 17:
-                rules_header_content = "CONTEST RULES:"
+                rules_header_content = "RULES:"
                 rules_header = self._format_terminal_line(rules_header_content, terminal_width)
                 # Enhanced header with bright cyan and glow effect
                 self._draw_terminal_text(rules_header, 0, i, COLORS['title'])
@@ -1377,7 +1456,7 @@ class UIRenderer:
                     rules_color = (200, 255, 200)  # Brighter green glow
                 self._draw_terminal_text(rules1, 0, i, rules_color)
             elif i == 19:
-                rules2_content = "• Faster and more accurate typing means higher scores and better chances to win"
+                rules2_content = "• Faster typing = higher scores & better win chances"
                 rules2 = self._format_terminal_line(rules2_content, terminal_width)
                 # Bright green for rules with occasional glow
                 rules_color = (150, 255, 150)  # Bright green
@@ -1385,7 +1464,7 @@ class UIRenderer:
                     rules_color = (200, 255, 200)  # Brighter green glow
                 self._draw_terminal_text(rules2, 0, i, rules_color)
             elif i == 20:
-                rules3_content = "• Each level has its own time, word difficulty, winner board and unique first place prize"
+                rules3_content = "• Each level has unique time, difficulty & prizes"
                 rules3 = self._format_terminal_line(rules3_content, terminal_width)
                 # Bright green for rules with occasional glow
                 rules_color = (150, 255, 150)  # Bright green
@@ -1393,62 +1472,51 @@ class UIRenderer:
                     rules_color = (200, 255, 200)  # Brighter green glow
                 self._draw_terminal_text(rules3, 0, i, rules_color)
             elif i == 21:
-                bonus_content = "• HARD MODE BONUS: +15 seconds every 3rd correct word to help you beat the clock!"
-                bonus = self._format_terminal_line(bonus_content, terminal_width)
-                # Special golden color for bonus info with glow
-                bonus_color = (255, 220, 100)  # Golden amber
-                if random.random() < 0.1:  # 10% chance of glow
-                    bonus_color = (255, 240, 150)  # Brighter golden glow
-                self._draw_terminal_text(bonus, 0, i, bonus_color)
-            elif i == 22:
-                separator = "╠" + "─" * (terminal_width - 2) + "╣"
-                self._draw_terminal_text(separator, 0, i, border_color)
-            elif i == 23:
-                desc_header_content = "CONTEST PRIZES:"
+                desc_header_content = "PRIZES:"
                 desc_header = self._format_terminal_line(desc_header_content, terminal_width)
                 # Enhanced header with bright gold and glow effect
                 self._draw_terminal_text(desc_header, 0, i, COLORS['title'])
-            elif i == 24:
-                desc1_content = "• 1ST PLACE (EASY): History of telephone devices book, sourced from ebay"
+            elif i == 22:
+                desc1_content = "• 1ST (EASY): History of telephone devices book"
                 desc1 = self._format_terminal_line(desc1_content, terminal_width)
                 # Enhanced golden amber with glow for 1st place
                 prize_color = (255, 220, 120)  # Bright golden amber
                 if random.random() < 0.08:  # 8% chance of glow
                     prize_color = (255, 240, 160)  # Brighter golden glow
                 self._draw_terminal_text(desc1, 0, i, prize_color)
-            elif i == 25:
-                desc2_content = "• 1ST PLACE (HARD): The actual telegraph key that you see right in front of you now"
+            elif i == 23:
+                desc2_content = "• 1ST (HARD): The actual telegraph key you see now"
                 desc2 = self._format_terminal_line(desc2_content, terminal_width)
                 # Enhanced golden orange with glow for 1st place hard
                 prize_color = (255, 210, 110)  # Bright golden orange
                 if random.random() < 0.1:  # 10% chance of glow
                     prize_color = (255, 230, 140)  # Brighter orange glow
                 self._draw_terminal_text(desc2, 0, i, prize_color)
-            elif i == 26:
-                desc3_content = "• 2-3 PLACES: T-shirt of our telecommunications history podcast or meetup merch of your choice"
+            elif i == 24:
+                desc3_content = "• 2-3 PLACES: T-shirt or meetup merch of your choice"
                 desc3 = self._format_terminal_line(desc3_content, terminal_width)
                 # Enhanced golden bronze with glow for other prizes
                 prize_color = (255, 200, 100)  # Bright golden bronze
                 if random.random() < 0.06:  # 6% chance of glow
                     prize_color = (255, 220, 130)  # Brighter bronze glow
                 self._draw_terminal_text(desc3, 0, i, prize_color)
-            elif i == 27:
+            elif i == 25:
                 separator = "╠" + "─" * (terminal_width - 2) + "╣"
                 self._draw_terminal_text(separator, 0, i, border_color)
-            elif i == 28:
-                inst_header_content = "AVAILABLE COMMANDS:"
-                inst_header = self._format_terminal_line(inst_header_content, terminal_width)
-                self._draw_terminal_text(inst_header, 0, i, COLORS['title'])
-            elif i == 29:
+            elif i == 26:
+                commands_header_content = "COMMANDS:"
+                commands_header = self._format_terminal_line(commands_header_content, terminal_width)
+                self._draw_terminal_text(commands_header, 0, i, COLORS['title'])
+            elif i == 27:
                 inst1_content = "• ↑↓ : Select"
                 inst1_line = self._format_terminal_line(inst1_content, terminal_width)
                 self._draw_terminal_text(inst1_line, 0, i, COLORS['hint'])
-            elif i == 30:
+            elif i == 28:
                 inst2_content = "• ENTER : Confirm"
                 inst2_line = self._format_terminal_line(inst2_content, terminal_width)
                 self._draw_terminal_text(inst2_line, 0, i, COLORS['hint'])
-            elif i == 31:
-                inst3_content = "• ESC : Main menu"
+            elif i == 29:
+                inst3_content = "• ESC : Menu"
                 inst3_line = self._format_terminal_line(inst3_content, terminal_width)
                 self._draw_terminal_text(inst3_line, 0, i, COLORS['hint'])
             elif i == terminal_height - 2:
@@ -1458,11 +1526,7 @@ class UIRenderer:
                 empty = "║" + " " * (terminal_width - 2) + "║"
                 self._draw_terminal_text(empty, 0, i, border_color)
         
-        # Bottom border
-        bottom_border = "╚" + "═" * (terminal_width - 2) + "╝"
-        self._draw_terminal_text(bottom_border, 0, terminal_height - 1, border_color)
-        
-        # Draw status bar
+        # Draw status bar (provides the bottom border)
         self._draw_status_bar(state_manager)
     
     def _draw_nickname_input(self, state_manager: GameStateManager):
@@ -1655,11 +1719,7 @@ class UIRenderer:
                 empty = "║" + " " * (terminal_width - 2) + "║"
                 self._draw_terminal_text(empty, 0, i, border_color)
         
-        # Bottom border
-        bottom_border = "╚" + "═" * (terminal_width - 2) + "╝"
-        self._draw_terminal_text(bottom_border, 0, terminal_height - 1, border_color)
-        
-        # Draw status bar
+        # Draw status bar (provides the bottom border)
         self._draw_status_bar(state_manager)
     
     def _draw_game_screen(self, state_manager: GameStateManager, morse_sequence: str, current_time: float):
@@ -1690,23 +1750,102 @@ class UIRenderer:
                 separator = "╠" + "═" * (terminal_width - 2) + "╣"
                 self._draw_terminal_text(separator, 0, i, border_color)
             elif i == 3:
-                # Game status line
-                status = f"PLAYER: {state_manager.game_data.nickname}  WORDS: {state_manager.game_data.words_completed}  TIME: {int(state_manager.game_data.time_remaining)}s  ERRORS: {state_manager.game_data.total_errors}"
-                status_line = self._format_terminal_line(status, terminal_width)
-                self._draw_terminal_text(status_line, 0, i, COLORS['text'])
-            elif i == 4:
-                # Word timer with color coding
-                if word_time_remaining > 5:
-                    timer_color = COLORS['text']
-                    timer_text = f"WORD TIMER: {word_time_remaining:.1f}s - TRANSMISSION ACTIVE"
-                elif word_time_remaining > 2:
-                    timer_color = COLORS['wrong']
-                    timer_text = f"WORD TIMER: {word_time_remaining:.1f}s - HURRY UP!"
+                # Enhanced game status line with prominent time display
+                time_remaining = state_manager.game_data.time_remaining
+                
+                # Color-code time based on urgency
+                if time_remaining > 60:
+                    time_color = COLORS['correct']  # Green - plenty of time
+                    time_indicator = "*"
+                elif time_remaining > 30:
+                    time_color = (255, 255, 100)  # Yellow - getting low
+                    time_indicator = "+"
+                elif time_remaining > 10:
+                    time_color = COLORS['wrong']  # Orange - urgent
+                    time_indicator = "!"
                 else:
-                    timer_color = (255, 50, 50)
-                    timer_text = f"WORD TIMER: {word_time_remaining:.1f}s - CRITICAL!"
-                timer_line = self._format_terminal_line(timer_text, terminal_width)
-                self._draw_terminal_text(timer_line, 0, i, timer_color)
+                    time_color = (255, 50, 50)  # Red - critical
+                    time_indicator = "!!"
+                
+                # Create enhanced time display with indicator
+                time_display = f"{time_indicator} {int(time_remaining)}s {time_indicator}"
+                
+                # Build status line with enhanced time
+                base_status = f"PLAYER: {state_manager.game_data.nickname}  WORDS: {state_manager.game_data.words_completed}  ERRORS: {state_manager.game_data.total_errors}"
+                
+                # Calculate spacing to position time prominently
+                available_width = terminal_width - 4  # Account for borders
+                base_status_len = len(base_status)
+                time_display_len = len(time_display)
+                spacing = available_width - base_status_len - time_display_len - 5  # Extra spacing for emphasis
+                
+                if spacing > 0:
+                    status = f"║ {base_status}{' ' * spacing}[{time_display}] ║"
+                else:
+                    # Fallback if not enough space
+                    status = f"║ {base_status}  TIME: {int(time_remaining)}s ║"
+                
+                # Draw the status line
+                self._draw_terminal_text(status, 0, i, COLORS['text'])
+                
+                # Draw time display with enhanced color if we have space
+                if spacing > 0:
+                    # Calculate position for time display
+                    time_x_pos = len(base_status) + spacing + 3  # Position after base status and spacing
+                    time_surface = self.terminal_font_bold.render(time_display, True, time_color)
+                    
+                    # Add pulsing effect for critical time
+                    if time_remaining <= 10:
+                        pulse = int(time.time() * 8) % 2  # Fast pulsing for critical time
+                        if pulse == 0:
+                            time_surface = self.terminal_font_bold.render(time_display, True, (255, 255, 255))  # White flash
+                    
+                    # Get terminal offset for positioning
+                    offset_x, offset_y = self._get_terminal_offset()
+                    char_width, char_height = self.terminal_font.size("X")
+                    
+                    # Blit the enhanced time display
+                    self.screen.blit(time_surface, (offset_x + time_x_pos * char_width, offset_y + i * char_height))
+            elif i == 4:
+                # Enhanced word timer with prominent visual indicators
+                if word_time_remaining > 10:
+                    timer_color = COLORS['correct']  # Green - plenty of time
+                    timer_indicator = "*"
+                    timer_status = "TRANSMISSION ACTIVE"
+                elif word_time_remaining > 5:
+                    timer_color = (255, 255, 100)  # Yellow - getting low
+                    timer_indicator = "+"
+                    timer_status = "TIME RUNNING LOW"
+                elif word_time_remaining > 2:
+                    timer_color = COLORS['wrong']  # Orange - urgent
+                    timer_indicator = "!"
+                    timer_status = "HURRY UP!"
+                else:
+                    timer_color = (255, 50, 50)  # Red - critical
+                    timer_indicator = "!!"
+                    timer_status = "CRITICAL TIME!"
+                
+                # Create enhanced timer display
+                timer_display = f"{timer_indicator} WORD TIMER: {word_time_remaining:.1f}s {timer_indicator} {timer_status}"
+                timer_line = self._format_terminal_line(timer_display, terminal_width)
+                
+                # Add pulsing effect for critical word time
+                if word_time_remaining <= 2:
+                    pulse = int(time.time() * 10) % 2  # Very fast pulsing for critical
+                    if pulse == 0:
+                        timer_color = (255, 255, 255)  # White flash for critical
+                    # Add extra emphasis with bold font for critical time
+                    timer_surface = self.terminal_font_bold.render(timer_display, True, timer_color)
+                    
+                    # Get terminal offset for positioning
+                    offset_x, offset_y = self._get_terminal_offset()
+                    char_width, char_height = self.terminal_font.size("X")
+                    
+                    # Calculate position to center the timer text
+                    timer_x = (terminal_width - len(timer_display)) // 2
+                    self.screen.blit(timer_surface, (offset_x + timer_x * char_width, offset_y + i * char_height))
+                else:
+                    self._draw_terminal_text(timer_line, 0, i, timer_color)
             elif i == 5:
                 separator = "╠" + "─" * (terminal_width - 2) + "╣"
                 self._draw_terminal_text(separator, 0, i, border_color)
@@ -1832,11 +1971,7 @@ class UIRenderer:
                 empty = "║" + " " * (terminal_width - 2) + "║"
                 self._draw_terminal_text(empty, 0, i, border_color)
         
-        # Bottom border
-        bottom_border = "╚" + "═" * (terminal_width - 2) + "╝"
-        self._draw_terminal_text(bottom_border, 0, terminal_height - 1, border_color)
-        
-        # Draw status bar
+        # Draw status bar (provides the bottom border)
         self._draw_status_bar(state_manager)
     
     def _draw_current_word(self, state_manager: GameStateManager):
@@ -2053,11 +2188,7 @@ class UIRenderer:
                 empty = "║" + " " * (terminal_width - 2) + "║"
                 self._draw_terminal_text(empty, 0, i, border_color)
         
-        # Bottom border
-        bottom_border = "╚" + "═" * (terminal_width - 2) + "╝"
-        self._draw_terminal_text(bottom_border, 0, terminal_height - 1, border_color)
-        
-        # Draw status bar
+        # Draw status bar (provides the bottom border)
         self._draw_status_bar(state_manager)
     
     def _draw_high_scores(self, state_manager: GameStateManager):
@@ -2195,11 +2326,7 @@ class UIRenderer:
                 empty = "║" + " " * (terminal_width - 2) + "║"
                 self._draw_terminal_text(empty, 0, i, border_color)
         
-        # Bottom border
-        bottom_border = "╚" + "═" * (terminal_width - 2) + "╝"
-        self._draw_terminal_text(bottom_border, 0, terminal_height - 1, border_color)
-        
-        # Draw status bar
+        # Draw status bar (provides the bottom border)
         self._draw_status_bar(state_manager)
     
     def _draw_numbered_menu(self, state_manager: GameStateManager):

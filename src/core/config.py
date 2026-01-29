@@ -44,14 +44,17 @@ DIFFICULTY_SETTINGS = {
         'o_letter_bonus': 0.0,    # No bonus for O letters
         'game_duration': 90.0,     # Reduced to 1.5 minutes for easy mode
         'streak_bonus_every_words': 3,  # Bonus time every N words without errors
-        'streak_bonus_amount': 10.0     # Bonus time amount in seconds
+        'streak_bonus_amount': 10.0,    # Bonus time amount in seconds
+        'unlimited_bonuses': True        # Allow unlimited bonus time earning
     },
     'hard': {
         'word_time_limit': 8.0,   # Less base time for hard mode
         'time_per_letter': 1.5,   # More time pressure per letter
         'o_letter_bonus': 0.0,    # No bonus for O letters
         'game_duration': 90.0,     # 1.5 minutes for hard mode
-        'time_bonus_amount': 15.0     # Bonus time amount for 3 consecutive correct words
+        'streak_bonus_every_words': 3,  # Bonus time every N consecutive correct words
+        'time_bonus_amount': 15.0,     # Bonus time amount for consecutive correct words
+        'unlimited_bonuses': True        # Allow unlimited bonus time earning
     }
 }
 
