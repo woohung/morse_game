@@ -62,6 +62,7 @@ class GPIOHandler:
     
     def _on_button_press(self):
         """Handle button press event."""
+        print(f"GPIO: Ключ нажат (pin {self.pin})")
         self.is_pressed = True
         self.press_start_time = time.time()
         if self.on_press:
@@ -69,6 +70,7 @@ class GPIOHandler:
     
     def _on_button_release(self):
         """Handle button release event."""
+        print(f"GPIO: Ключ отпущен (pin {self.pin}), длительность: {time.time() - self.press_start_time:.3f}s")
         if self.is_pressed:
             press_duration = time.time() - self.press_start_time
             if self.on_release:
@@ -92,6 +94,12 @@ class GPIOHandler:
                 self.input_mode = 'keyboard' if Button is None else 'gpio'
                 if self.input_mode == 'gpio':
                     self.start()
+    
+    def reset_state(self):
+        """Reset the pressed state to prevent accidental key press detection."""
+        self.is_pressed = False
+        self.press_start_time = 0
+        print("GPIO: состояние ключа сброшено")
     
     def cleanup(self):
         """Clean up GPIO resources."""
