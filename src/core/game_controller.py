@@ -16,8 +16,9 @@ from ..hardware.megohmmeter_control import MegohmmeterController, MockMegohmmete
 class GameController:
     """Controls game logic and manages game state."""
     
-    def __init__(self, state_manager: GameStateManager):
+    def __init__(self, state_manager: GameStateManager, gpio_handler=None):
         self.state_manager = state_manager
+        self.gpio_handler = gpio_handler
         self.word_generator = WordGenerator()
         self.decoder = MorseDecoder()
         self.high_scores = HighScoreManager()
@@ -87,6 +88,42 @@ class GameController:
         """Start a new game session."""
         print(f"Starting new game for player: {self.state_manager.game_data.nickname}")
         
+        # Instead of directly starting game, go to ready state first
+        print("Transitioning to READY state for connection setup...")
+        self.state_manager.change_state(GameState.READY)
+    
+    def update_ready_screen(self):
+        """Update ready screen connection phases."""
+        if self.state_manager.current_state != GameState.READY:
+            return
+        
+        now = time.time()
+        elapsed = now - self.state_manager.game_data.ready_start_time
+        phase = self.state_manager.game_data.connection_phase
+        
+        # Phase transitions every 1 second (was 2 seconds)
+        if elapsed > 1.0 and phase == 0:
+            self.state_manager.game_data.connection_phase = 1
+            self.state_manager.game_data.connection_text = "CONNECTING TELEGRAPH KEY..."
+            print(f"READY: Phase 1 - Connecting telegraph key...")
+        elif elapsed > 2.0 and phase == 1:
+            self.state_manager.game_data.connection_phase = 2
+            self.state_manager.game_data.connection_text = "CALIBRATING MEGOHMMETER..."
+            print(f"READY: Phase 2 - Calibrating megohmmeter...")
+        elif elapsed > 3.0 and phase == 2:
+            self.state_manager.game_data.connection_phase = 3
+            self.state_manager.game_data.connection_text = "READY FOR TRANSMISSION"
+            print(f"READY: Phase 3 - Ready for transmission")
+        elif elapsed > 4.0 and phase == 3:
+            # Keep final phase
+            pass
+    
+    def start_game_from_ready(self):
+        """Actually start the game after ready screen."""
+        # Reset GPIO state to prevent accidental key press detection
+        if self.gpio_handler:
+            self.gpio_handler.reset_state()
+        
         # Reset megohmmeter needle before starting new game
         if self.megohmmeter:
             self.megohmmeter.force_reset()
@@ -108,6 +145,8 @@ class GameController:
         self.state_manager.game_data.score = 0
         self.state_manager.game_data.time_remaining = settings['game_duration']
         self.state_manager.game_data.total_errors = 0
+        self.state_manager.game_data.streak_count = 0
+        self.state_manager.game_data.current_word_has_error = False
         self.state_manager.game_data.game_start_time = time.time()
         self.current_sequence = ""
         self.last_timeout_check = time.time()  # Reset timeout check timer
@@ -127,6 +166,17 @@ class GameController:
             # Move megohmmeter needle to maximum when key is pressed
             if self.megohmmeter:
                 self.megohmmeter.key_pressed()
+        elif self.state_manager.current_state == GameState.READY:
+            # Start game when key is pressed in ready state
+            if self.state_manager.game_data.connection_phase >= 3:  # Only allow in final phase
+                self.start_game_from_ready()
+    
+    def on_space_press(self):
+        """Handle space bar press."""
+        if self.state_manager.current_state == GameState.READY:
+            # Start game when space is pressed in ready state
+            if self.state_manager.game_data.connection_phase >= 3:  # Only allow in final phase
+                self.start_game_from_ready()
     
     def on_key_release(self, press_duration: float):
         """Handle Morse key release during gameplay."""
@@ -238,11 +288,14 @@ class GameController:
         """Check for timeouts in Morse code input during gameplay or practice."""
         from .config import LETTER_GAP
         
+        # Handle ready screen updates
+        if self.state_manager.current_state == GameState.READY:
+            self.update_ready_screen()
+            return
+        
         # Handle practice mode timeouts
         if self.state_manager.current_state == GameState.PRACTICE:
             self.check_practice_timeouts()
-            # Periodically ensure needle is at zero when not pressed in practice mode
-            self._ensure_needle_at_zero()
             return
         
         if self.state_manager.current_state != GameState.PLAYING:
@@ -275,17 +328,27 @@ class GameController:
     def _ensure_needle_at_zero(self):
         """Ensure needle is at baseline when key should not be pressed."""
         if self.megohmmeter and hasattr(self.megohmmeter, 'current_value'):
-            # Only check if we have access to GPIO handler state
-            if hasattr(self, '_last_gpio_state_check'):
-                if time.time() - self._last_gpio_state_check > 0.5:  # Check every 0.5 seconds
-                    baseline = self.megohmmeter.baseline_force
-                    tolerance = 0.02  # Допуск вокруг базового подпора
-                    if abs(self.megohmmeter.current_value - baseline) > tolerance:
-                        print(f"Мегомметр: обнаружено отклонение от базового подпора, принудительный сброс")
-                        self.megohmmeter.force_reset()
+            # Check if key is currently pressed via GPIO handler
+            is_key_pressed = False
+            if self.gpio_handler and hasattr(self.gpio_handler, 'is_pressed'):
+                is_key_pressed = self.gpio_handler.is_pressed
+            
+            # Only check and reset if key is not pressed
+            if not is_key_pressed:
+                if hasattr(self, '_last_gpio_state_check'):
+                    if time.time() - self._last_gpio_state_check > 0.5:  # Check every 0.5 seconds
+                        baseline = self.megohmmeter.baseline_force
+                        tolerance = 0.02  # Допуск вокруг базового подпора
+                        if abs(self.megohmmeter.current_value - baseline) > tolerance:
+                            print(f"Мегомметр: обнаружено отклонение от базового подпора, принудительный сброс")
+                            self.megohmmeter.force_reset()
+                        self._last_gpio_state_check = time.time()
+                else:
                     self._last_gpio_state_check = time.time()
             else:
-                self._last_gpio_state_check = time.time()
+                # Key is pressed, don't reset needle
+                if hasattr(self, '_last_gpio_state_check'):
+                    delattr(self, '_last_gpio_state_check')
     
     def _word_completed(self):
         """Handle successful completion of current word."""

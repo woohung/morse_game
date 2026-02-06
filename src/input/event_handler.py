@@ -43,6 +43,8 @@ class EventHandler:
             return self._handle_difficulty_events(event)
         elif self.state_manager.current_state == GameState.NICKNAME_INPUT:
             return self._handle_nickname_events(event)
+        elif self.state_manager.current_state == GameState.READY:
+            return self._handle_ready_events(event)
         elif self.state_manager.current_state == GameState.PLAYING:
             return self._handle_game_events(event)
         elif self.state_manager.current_state == GameState.PRACTICE:
@@ -144,6 +146,16 @@ class EventHandler:
             char = event.unicode
             if char.isalnum() or char in "-_":
                 self.state_manager.add_nickname_char(char)
+        
+        return True
+    
+    def _handle_ready_events(self, event) -> bool:
+        """Handle events in ready screen."""
+        if event.key == pygame.K_ESCAPE:
+            self.state_manager.change_state(GameState.MAIN_MENU)
+        elif event.key == pygame.K_SPACE:
+            # Start game when space is pressed
+            self.game_controller.on_space_press()
         
         return True
     

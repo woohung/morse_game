@@ -191,3 +191,33 @@ class HighScoreManager:
             'average_score': round(average_score, 1),
             'total_words': total_words
         }
+    
+    def get_rank(self, score: int, words_completed: int, errors: int, difficulty: str = 'easy') -> int:
+        """Get rank position for a score in specific difficulty.
+        
+        Args:
+            score: Score to check
+            words_completed: Number of words completed
+            errors: Number of errors
+            difficulty: Difficulty level
+            
+        Returns:
+            Rank position (1-based), or 0 if no scores exist
+        """
+        if difficulty not in self.scores:
+            difficulty = 'easy'
+        
+        if not self.scores[difficulty]:
+            return 1  # First score would be rank 1
+        
+        # Count how many existing scores are better than this score
+        # Better means: higher score, or same score with more words completed, 
+        # or same score and words with fewer errors
+        better_scores = 0
+        for existing_score in self.scores[difficulty]:
+            if (existing_score['score'] > score or
+                (existing_score['score'] == score and existing_score['words_completed'] > words_completed) or
+                (existing_score['score'] == score and existing_score['words_completed'] == words_completed and existing_score.get('errors', 0) < errors)):
+                better_scores += 1
+        
+        return better_scores + 1  # Rank is 1-based

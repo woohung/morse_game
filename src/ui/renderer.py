@@ -427,6 +427,8 @@ class UIRenderer:
             self._draw_difficulty_select(state_manager)
         elif state_manager.current_state == GameState.NICKNAME_INPUT:
             self._draw_nickname_input(state_manager)
+        elif state_manager.current_state == GameState.READY:
+            self._draw_ready_screen(state_manager, current_time)
         elif state_manager.current_state == GameState.PLAYING:
             self._draw_game_screen(state_manager, morse_sequence, current_time)
         elif state_manager.current_state == GameState.PRACTICE:
@@ -1731,6 +1733,79 @@ class UIRenderer:
         # Draw status bar (provides the bottom border)
         self._draw_status_bar(state_manager)
     
+    def _draw_ready_screen(self, state_manager: GameStateManager, current_time: float):
+        """Draw ready screen with connection setup sequence."""
+        terminal_width, terminal_height = self._get_terminal_dimensions()
+        text_color = (100, 255, 100)  # Green phosphor
+        
+        # Add subtle flicker effect like other screens
+        import random
+        flicker_intensity = 0
+        if random.random() < 0.05:  # 5% chance of flicker
+            flicker_intensity = random.randint(0, 20)
+            text_color = (100 - flicker_intensity, 255 - flicker_intensity, 100 - flicker_intensity)
+        
+        # Draw title
+        title = "SYSTEM CONSOLE LOCK - CONNECTION SETUP"
+        self._draw_terminal_text_bold(title, 0, 2, text_color)
+        
+        # Draw separator
+        separator = "=" * terminal_width
+        self._draw_terminal_text(separator, 0, 3, text_color)
+        
+        # Draw connection status with blinking effect
+        phase = state_manager.game_data.connection_phase
+        connection_text = state_manager.game_data.connection_text
+        
+        # Calculate blinking based on time
+        blink_on = int(current_time * 2) % 2 == 0  # Blink every 0.5 seconds
+        
+        # Connection phase display
+        phase_y = 6
+        phase_text = f"PHASE {phase + 1}/4: {connection_text}"
+        if blink_on or phase < 3:  # Always show current phase, blink only in final phase
+            self._draw_terminal_text_bold(phase_text, 0, phase_y, (255, 255, 100))  # Yellow
+        
+        # Draw progress bar
+        progress_y = 8
+        progress_chars = "#" * (phase + 1) + "-" * (3 - phase)
+        progress_bar = f"[{progress_chars}] {phase + 1}/4"
+        self._draw_terminal_text(progress_bar, 0, progress_y, text_color)
+        
+        # Draw system messages
+        messages_y = 11
+        if phase >= 0:
+            self._draw_terminal_text("OK SYSTEM LOADED", 0, messages_y, text_color)
+        if phase >= 1:
+            self._draw_terminal_text("OK TELEGRAPH KEY DETECTED", 0, messages_y + 1, text_color)
+        if phase >= 2:
+            self._draw_terminal_text("OK MEGOHMMETER CALIBRATED", 0, messages_y + 2, text_color)
+        if phase >= 3:
+            if blink_on:
+                self._draw_terminal_text("OK READY STATUS CONFIRMED", 0, messages_y + 3, text_color)
+        
+        # Draw instructions in final phase
+        if phase >= 3:
+            instruction_y = 16
+            if blink_on:
+                self._draw_terminal_text_bold("CLOSE KEY TO START", 0, instruction_y, (255, 255, 100))
+                self._draw_terminal_text_bold("TRANSMISSION", 0, instruction_y + 1, (255, 255, 100))
+            else:
+                self._draw_terminal_text("CLOSE KEY TO START", 0, instruction_y, (200, 200, 50))
+                self._draw_terminal_text("TRANSMISSION", 0, instruction_y + 1, (200, 200, 50))
+        
+        # Draw operator info
+        operator_y = terminal_height - 5
+        operator_text = f"OPERATOR: {state_manager.game_data.nickname.upper()}"
+        self._draw_terminal_text(operator_text, 0, operator_y, (150, 150, 255))  # Blue
+        
+        # Draw waiting animation
+        if phase < 3:
+            wait_chars = ["|", "/", "-", "\\"]
+            wait_char = wait_chars[int(current_time * 4) % 4]
+            wait_text = f"WAITING {wait_char}"
+            self._draw_terminal_text(wait_text, terminal_width - len(wait_text) - 2, operator_y, (255, 255, 100))
+    
     def _draw_game_screen(self, state_manager: GameStateManager, morse_sequence: str, current_time: float):
         """Draw main game screen in BBS terminal style."""
         # Update game timer - don't overwrite bonus time, just let it decrease naturally
@@ -2167,32 +2242,43 @@ class UIRenderer:
                 result1_line = self._format_terminal_line(result1, terminal_width)
                 self._draw_terminal_text(result1_line, 0, i, COLORS['text'])
             elif i == 13:
-                result2 = f"WORDS TRANSMITTED: {state_manager.game_data.words_completed}"
+                # Get rank position
+                rank = state_manager.high_score_manager.get_rank(
+                    state_manager.game_data.score,
+                    state_manager.game_data.words_completed,
+                    state_manager.game_data.total_errors,
+                    state_manager.game_data.difficulty
+                )
+                result2 = f"RANK POSITION: #{rank}"
                 result2_line = self._format_terminal_line(result2, terminal_width)
-                self._draw_terminal_text(result2_line, 0, i, COLORS['text'])
+                self._draw_terminal_text(result2_line, 0, i, COLORS['title'])
             elif i == 14:
-                result3 = f"FINAL SCORE: {state_manager.game_data.score} POINTS"
+                result3 = f"ACCURACY: {state_manager.get_accuracy()}%"
                 result3_line = self._format_terminal_line(result3, terminal_width)
-                self._draw_terminal_text(result3_line, 0, i, COLORS['title'])
+                self._draw_terminal_text(result3_line, 0, i, COLORS['text'])
             elif i == 15:
+                result4 = f"ERRORS: {state_manager.game_data.total_errors}"
+                result4_line = self._format_terminal_line(result4, terminal_width)
+                self._draw_terminal_text(result4_line, 0, i, COLORS['text'])
+            elif i == 16:
                 empty = self._format_terminal_line("", terminal_width)
                 self._draw_terminal_text(empty, 0, i, border_color)
-            elif i == 16:
+            elif i == 17:
                 separator = "╠" + "─" * (terminal_width - 2) + "╣"
                 self._draw_terminal_text(separator, 0, i, border_color)
-            elif i == 17:
+            elif i == 18:
                 inst_header = f"AVAILABLE COMMANDS:"
                 inst_line = self._format_terminal_line(inst_header, terminal_width)
                 self._draw_terminal_text(inst_line, 0, i, COLORS['hint'])
-            elif i == 18:
+            elif i == 19:
                 inst1 = f"• ENTER : Return to main menu"
                 inst1_line = self._format_terminal_line(inst1, terminal_width)
                 self._draw_terminal_text(inst1_line, 0, i, COLORS['hint'])
-            elif i == 19:
+            elif i == 20:
                 inst2 = f"• ESC : Quit BBS"
                 inst2_line = self._format_terminal_line(inst2, terminal_width)
                 self._draw_terminal_text(inst2_line, 0, i, COLORS['hint'])
-            elif i == 20:
+            elif i == 21:
                 footer = f"THANK YOU FOR USING MORSE CODE BBS!"
                 footer_line = self._format_terminal_line(footer, terminal_width)
                 self._draw_terminal_text(footer_line, 0, i, border_color)
@@ -2287,9 +2373,14 @@ class UIRenderer:
                     words = score['words_completed']
                     errors = score.get('errors', 0)
                     
-                    # Calculate accuracy
-                    total_letters = sum(len(word) for word in ['TEST'] * words)  # Approximate
-                    accuracy = ((total_letters - errors) / max(total_letters, 1)) * 100 if total_letters > 0 else 100
+                    # Calculate accuracy properly
+                    total_attempts = words + errors
+                    if total_attempts == 0:
+                        accuracy = 100.0  # Perfect accuracy if no errors and no attempts
+                    else:
+                        accuracy = (words / total_attempts) * 100
+                        # Clamp accuracy between 0 and 100
+                        accuracy = max(0.0, min(100.0, accuracy))
                     
                     if rank == 1:
                         # Champion with special formatting and effects

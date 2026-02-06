@@ -13,6 +13,7 @@ class GameState(Enum):
     NUMBERED_MENU = "numbered_menu"  # New numbered menu with Morse input
     DIFFICULTY_SELECT = "difficulty_select"
     NICKNAME_INPUT = "nickname_input"
+    READY = "ready"  # New ready state for connection setup screen
     PLAYING = "playing"
     PRACTICE = "practice"  # New practice mode for single letter training
     GAME_OVER = "game_over"
@@ -51,6 +52,11 @@ class GameData:
         # Bonus time effect data
         self.bonus_time_received: Optional[float] = None  # Time when bonus was received
         self.bonus_amount: int = 0  # Amount of bonus time received
+        
+        # Ready screen data
+        self.ready_start_time: Optional[float] = None  # When ready screen started
+        self.connection_phase: int = 0  # Connection setup phase (0-3)
+        self.connection_text: str = ""  # Current connection text
 
 class MenuOption:
     """Menu option class."""
@@ -126,6 +132,11 @@ class GameStateManager:
             self._init_difficulty_menu()
         elif new_state == GameState.NICKNAME_INPUT:
             self.nickname_input = ""
+        elif new_state == GameState.READY:
+            # Initialize ready screen
+            self.game_data.ready_start_time = time.time()
+            self.game_data.connection_phase = 0
+            self.game_data.connection_text = "INITIALIZING SYSTEM..."
         elif new_state == GameState.PLAYING:
             # Don't reset game_data here - it should be set when game actually starts
             # This preserves the nickname that was set
@@ -311,3 +322,17 @@ class GameStateManager:
         if 1 <= number <= len(self.numbered_menu_options):
             return self.numbered_menu_options[number - 1].action
         return None
+    
+    def get_accuracy(self) -> float:
+        """Calculate accuracy percentage for the current game session.
+        
+        Returns:
+            Accuracy percentage (0-100), or 0 if no attempts made
+        """
+        total_attempts = self.game_data.words_completed + self.game_data.total_errors
+        
+        if total_attempts == 0:
+            return 0.0
+        
+        accuracy = (self.game_data.words_completed / total_attempts) * 100
+        return round(accuracy, 1)

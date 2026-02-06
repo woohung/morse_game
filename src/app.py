@@ -101,14 +101,6 @@ class MorseApp:
         
         # Initialize components
         self.state_manager = GameStateManager()
-        self.game_controller = GameController(self.state_manager)
-        self.ui_renderer = UIRenderer(self.screen)
-        
-        # Set render surface if using scaling
-        if hasattr(self, 'render_surface') and self.render_surface:
-            self.ui_renderer.set_render_surface(self.render_surface)
-        
-        # Initialize GPIO handler
         self.gpio_handler = GPIOHandler(
             pin=17,  # Default GPIO pin
             on_press=self._on_gpio_press,
@@ -116,6 +108,12 @@ class MorseApp:
             input_mode=input_mode,
             bounce_time=0.05  # 50ms debounce time for telegraph key
         )
+        self.game_controller = GameController(self.state_manager, self.gpio_handler)
+        self.ui_renderer = UIRenderer(self.screen)
+        
+        # Set render surface if using scaling
+        if hasattr(self, 'render_surface') and self.render_surface:
+            self.ui_renderer.set_render_surface(self.render_surface)
         
         # Initialize event handler
         self.event_handler = EventHandler(
@@ -217,6 +215,9 @@ class MorseApp:
         elif self.state_manager.current_state == GameState.PRACTICE:
             print("GPIO Press: маршрутизация в on_practice_key_press (практика)")
             self.game_controller.on_practice_key_press()
+        elif self.state_manager.current_state == GameState.READY:
+            print("GPIO Press: маршрутизация в on_key_press (READY)")
+            self.game_controller.on_key_press()
         else:
             print("GPIO Press: состояние не требует обработки")
     
@@ -232,6 +233,8 @@ class MorseApp:
         elif self.state_manager.current_state == GameState.PRACTICE:
             print("GPIO Release: маршрутизация в on_practice_key_release (практика)")
             self.game_controller.on_practice_key_release(press_duration)
+        elif self.state_manager.current_state == GameState.READY:
+            print("GPIO Release: состояние READY - обработка не требуется")
         else:
             print("GPIO Release: состояние не требует обработки")
     
